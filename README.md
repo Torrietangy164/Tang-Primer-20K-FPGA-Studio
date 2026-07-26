@@ -13,6 +13,7 @@ Run these in PowerShell from this folder:
 .\fpga.ps1 upload                # build + load SRAM (fast, volatile)
 .\fpga.ps1 flash                 # build + write/verify persistent flash
 .\fpga.ps1 sim                   # self-checking RTL simulation
+.\fpga.ps1 wave                  # simulate + open GTKWave with saved signals
 .\fpga.ps1 debug                 # lint + simulate + open GTKWave
 .\fpga.ps1 lint                  # Verilator lint only
 .\fpga.ps1 doctor                # tools, USB programmer, and COM-port checks
@@ -40,14 +41,65 @@ If the JTAG interface still does not appear, update the Dock's BL702 debugger fi
 
 ## Project layout
 
-- `rtl/` — synthesizable Verilog/SystemVerilog; `top.sv` is the starter design.
-- `constraints/primer20k_dock.cst` — 27 MHz clock and Dock LED pins from Sipeed's official examples.
-- `sim/` — self-checking testbenches and VCD generation.
-- `build/` — generated netlists, reports, simulation output, and `top.fs`.
-- `fpga.config.psd1` — device, family, top module, constraint, programmer, and pinned toolchain.
-- `fpga.ps1` — single entry point for building, programming, simulation, and diagnosis.
+- `rtl/` - synthesizable Verilog/SystemVerilog; `top.sv` is the starter design.
+- `constraints/primer20k_dock.cst` - physical pin and electrical constraints.
+- `sim/` - self-checking testbenches, GTKWave layouts, and VCD generation.
+- `build/` - generated netlists, reports, simulation output, and `top.fs`.
+- `fpga.config.psd1` - device, family, top module, constraint, programmer, and toolchain settings.
+- `fpga.ps1` - single entry point for building, programming, simulation, and diagnosis.
 
 The command-line build discovers `.v` and `.sv` files under `rtl/` automatically. `rtl/files.f` is available for external tools that prefer an explicit file list.
+
+## Learning projects
+
+| Project | Skills and result |
+|---|---|
+| [`01_button_led_pwm`](projects/01_button_led_pwm) | Synchronizers, debouncing, clock enables, counters, PWM, state/mode control, self-checking bounce simulation, and a prepared GTKWave layout. |
+| [`_template`](projects/_template) | Minimal, buildable starting point for creating additional examples with the same commands. |
+
+Each project is self-contained. For Project 01:
+
+```powershell
+cd projects\01_button_led_pwm
+.\fpga.ps1 sim       # compile and run the self-checking testbench
+.\fpga.ps1 wave      # simulate and open the prepared GTKWave view
+.\fpga.ps1 debug     # lint, simulate, and open GTKWave
+.\fpga.ps1 build     # synthesize, place/route, and create build/top.fs
+.\fpga.ps1 upload    # build and load volatile SRAM
+.\fpga.ps1 flash     # build and verify persistent flash
+```
+
+The same project can be selected without changing folders:
+
+```powershell
+.\fpga.ps1 sim -Project projects/01_button_led_pwm
+.\fpga.ps1 wave -Project projects/01_button_led_pwm
+```
+
+### Creating another example project
+
+Use a two-digit sequence number and a short lowercase name, such as
+`02_uart_terminal` or `03_spi_controller`. Copy the maintained template:
+
+```powershell
+Copy-Item -Recurse projects\_template projects\02_uart_terminal
+cd projects\02_uart_terminal
+```
+
+Then follow this method:
+
+1. Put synthesizable `.v`/`.sv` modules in `rtl/`, with `rtl/top.sv` as the configured top module.
+2. List source files in `rtl/files.f` for editor/external-tool compatibility. The command runner also discovers RTL files automatically.
+3. Put a self-checking `tb_top` testbench in `sim/`; write `build/waves.vcd` from that testbench.
+4. Edit `sim/waves.gtkw` to preload the most useful GTKWave signals.
+5. Update `constraints/primer20k_dock.cst` whenever top-level ports or pins change. Never guess voltage standards—check the board schematic or official constraints.
+6. Update `fpga.config.psd1` if the top module, constraint filename, board, or clock changes.
+7. Run `sim`, `lint`, and `build` before `upload`; use `flash` only after the SRAM behavior is correct.
+8. Give the project its own README with its specification, controls, block-level explanation, verification results, timing/utilization, and known limitations.
+
+The project-local `fpga.ps1` is only a thin forwarding wrapper. The maintained
+build implementation remains at the repository root, so new projects should
+copy the wrapper unchanged.
 
 ## Debugging support
 

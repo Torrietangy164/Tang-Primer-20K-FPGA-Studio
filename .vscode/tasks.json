@@ -38,6 +38,41 @@
             "problemMatcher": []
         },
         {
+            "label": "Project 01: Simulate",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\fpga.ps1", "sim", "-Project", "projects/01_button_led_pwm"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project 01: Build",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\fpga.ps1", "build", "-Project", "projects/01_button_led_pwm"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project 01: Upload SRAM",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\fpga.ps1", "upload", "-Project", "projects/01_button_led_pwm"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project 01: Open GTKWave",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\fpga.ps1", "wave", "-Project", "projects/01_button_led_pwm"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Project 01: Debug waveform",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\fpga.ps1", "debug", "-Project", "projects/01_button_led_pwm"],
+            "problemMatcher": []
+        },
+        {
             "label": "FPGA: Configure JTAG driver",
             "type": "shell",
             "command": "powershell",

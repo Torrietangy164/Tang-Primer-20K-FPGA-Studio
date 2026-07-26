@@ -4,6 +4,7 @@ param(
     [ValidateSet('help', 'setup', 'driver', 'doctor', 'lint', 'sim', 'wave', 'debug', 'build', 'upload', 'flash', 'detect', 'serial', 'clean')]
     [string] $Command = 'help',
 
+    [string] $Project = '.',
     [string] $Port,
     [ValidateRange(300, 4000000)]
     [int] $Baud = 115200,
@@ -13,8 +14,25 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$ProjectRoot = $PSScriptRoot
-$Config = Import-PowerShellDataFile -LiteralPath (Join-Path $ProjectRoot 'fpga.config.psd1')
+$WorkspaceRoot = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')
+$projectCandidate = if ([IO.Path]::IsPathRooted($Project)) {
+    $Project
+} else {
+    Join-Path $WorkspaceRoot $Project
+}
+$ProjectRoot = [IO.Path]::GetFullPath($projectCandidate).TrimEnd('\')
+if ($ProjectRoot -ne $WorkspaceRoot -and
+    -not $ProjectRoot.StartsWith($WorkspaceRoot + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Project must be inside the workspace: $ProjectRoot"
+}
+if (-not (Test-Path -LiteralPath $ProjectRoot -PathType Container)) {
+    throw "Project directory does not exist: $ProjectRoot"
+}
+$ConfigPath = Join-Path $ProjectRoot 'fpga.config.psd1'
+if (-not (Test-Path -LiteralPath $ConfigPath)) {
+    throw "Project configuration is missing: $ConfigPath"
+}
+$Config = Import-PowerShellDataFile -LiteralPath $ConfigPath
 $BuildDir = Join-Path $ProjectRoot 'build'
 
 function Write-Usage {
@@ -36,6 +54,7 @@ Tang Primer 20K FPGA commands
   .\fpga.ps1 clean                 Remove generated build files
 
 Add -NoBuild to upload/flash to reuse build/top.fs.
+Use -Project projects/<folder> to run a project from the workspace root.
 '@ | Write-Host
 }
 
@@ -140,8 +159,18 @@ function Open-Waveform {
     if (-not (Test-Path -LiteralPath $waveform)) {
         Invoke-Simulation
     }
-    Start-Process -FilePath (Get-Command 'gtkwave').Source -ArgumentList @($waveform) | Out-Null
-    Write-Host 'GTKWave opened. You can also open build/waves.vcd directly in VS Code.' -ForegroundColor Green
+    $saveFile = Join-Path $ProjectRoot 'sim\waves.gtkw'
+    $gtkwaveArgs = @('--dump', ('"' + $waveform + '"'))
+    if (Test-Path -LiteralPath $saveFile) {
+        $gtkwaveArgs += @('--save', ('"' + $saveFile + '"'))
+    }
+    Start-Process -FilePath (Get-Command 'gtkwave').Source `
+        -ArgumentList $gtkwaveArgs -WorkingDirectory $ProjectRoot | Out-Null
+    if (Test-Path -LiteralPath $saveFile) {
+        Write-Host 'GTKWave opened with the project signal layout and complete simulation timeline.' -ForegroundColor Green
+    } else {
+        Write-Host 'GTKWave opened. You can also open build/waves.vcd directly in VS Code.' -ForegroundColor Green
+    }
 }
 
 function Invoke-Build {
@@ -342,7 +371,7 @@ try {
         return
     }
     if ($Command -eq 'setup') {
-        & (Join-Path $ProjectRoot 'scripts/setup-toolchain.ps1')
+        & (Join-Path $WorkspaceRoot 'scripts/setup-toolchain.ps1')
         return
     }
     if ($Command -eq 'driver') {
