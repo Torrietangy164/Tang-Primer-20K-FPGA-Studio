@@ -2,6 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "FPGA: Open Beginner IDE",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}\\FPGA-IDE.ps1"],
+            "problemMatcher": []
+        },
+        {
             "label": "FPGA: Build",
             "type": "shell",
             "command": "powershell",

@@ -1,0 +1,68 @@
+[CmdletBinding()]
+param(
+    [switch] $SkipHdl
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$workspace = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+
+function Invoke-Checked {
+    param([Parameter(Mandatory)] [string] $Executable, [string[]] $Arguments = @())
+    Write-Host ("> {0} {1}" -f $Executable, ($Arguments -join ' ')) -ForegroundColor DarkGray
+    & $Executable @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "$Executable failed with exit code $LASTEXITCODE"
+    }
+}
+
+Push-Location $workspace
+try {
+    $requiredFiles = @(
+        'LICENSE', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
+        'docs\DEPLOYMENT.md', 'docs\images\studio-main.png',
+        'docs\images\studio-insights.png', 'docs\images\studio-command-palette.png',
+        'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png'
+    )
+    $missing = @($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
+    if ($missing.Count) {
+        throw "Required release files are missing: $($missing -join ', ')"
+    }
+    foreach ($image in $requiredFiles | Where-Object { $_ -like '*.png' }) {
+        if ((Get-Item -LiteralPath $image).Length -lt 10000) {
+            throw "Screenshot is unexpectedly small or invalid: $image"
+        }
+    }
+
+    Invoke-Checked python @('-m', 'compileall', '-q', 'ide')
+    Invoke-Checked python @('-m', 'unittest', 'discover', '-s', 'ide\tests', '-v')
+    Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\_template')
+    Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\01_button_led_pwm')
+
+    $parseFailures = @()
+    foreach ($script in Get-ChildItem -Path $workspace -Recurse -Filter '*.ps1' -File) {
+        if ($script.FullName -match '[\\/](?:build|\.git|\.fpga-studio)[\\/]') { continue }
+        $tokens = $null
+        $errors = $null
+        [void] [Management.Automation.Language.Parser]::ParseFile($script.FullName, [ref] $tokens, [ref] $errors)
+        if ($errors.Count) {
+            $parseFailures += $errors | ForEach-Object { "$($script.FullName): $($_.Message)" }
+        }
+    }
+    if ($parseFailures.Count) {
+        throw "PowerShell parse failures:`n$($parseFailures -join "`n")"
+    }
+    [void] (Get-Content -LiteralPath '.vscode\tasks.json' -Raw | ConvertFrom-Json)
+
+    if (-not $SkipHdl) {
+        Invoke-Checked powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\fpga.ps1',
+            'lint', '-Project', 'projects/01_button_led_pwm')
+        Invoke-Checked powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\fpga.ps1',
+            'sim', '-Project', 'projects/01_button_led_pwm')
+    }
+
+    Invoke-Checked git @('diff', '--check')
+    Write-Host 'RELEASE CHECK PASSED' -ForegroundColor Green
+} finally {
+    Pop-Location
+}

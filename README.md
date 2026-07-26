@@ -1,8 +1,59 @@
 # Tang Primer 20K FPGA development environment
 
+[![Quality gates](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-6c63ff.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-4f9cff.svg)](https://www.python.org/)
+
 This folder is configured for the Sipeed Tang Primer 20K core board (`GW2A-LV18PG256C8/I7`), with the Dock carrier as the default pin map and programmer.
 
 The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
+
+## Beginner desktop IDE
+
+Start the graphical interface with one command:
+
+```powershell
+.\FPGA-IDE.ps1
+```
+
+Windows users can alternatively double-click `Open-FPGA-IDE.cmd`.
+
+![Tang Primer FPGA Studio main workspace](docs/images/studio-main.png)
+
+The release workspace includes custom iconography, searchable project
+navigation, open-file tabs, signal/module intelligence, contextual HDL
+explanations, project-wide search, a command palette, reviewed code snippets,
+safe quick fixes, a pin assignment inspector, and a design-health dashboard.
+The dashboard turns build reports into timing, utilization, hierarchy,
+artifact, and verification-readiness insights. Live console actions cover
+simulation, GTKWave, lint, debug, build, SRAM upload, persistent flash, JTAG
+detection, hardware diagnosis, UART monitoring, tool setup, and driver setup.
+
+### Intelligent workspace
+
+| Project health, hierarchy, timing and readiness | Searchable command palette |
+|---|---|
+| ![Project Insights dashboard](docs/images/studio-insights.png) | ![Searchable command palette](docs/images/studio-command-palette.png) |
+
+| Reviewed HDL Pattern Library | Pin and electrical-standard inspection |
+|---|---|
+| ![HDL Pattern Library](docs/images/studio-pattern-library.png) | ![Pin Assignment Inspector](docs/images/studio-pin-inspector.png) |
+
+The Studio is local and offline after toolchain installation: it requires no
+account, sends no telemetry, contains projects inside the workspace, blocks
+hardware programming when smart checks contain red errors, warns before
+persistent flash, and records rotating diagnostic logs under `.fpga-studio/`.
+
+Put design code in the selected project's `rtl/` folder, verification code in
+`sim/`, and top-level pin assignments in `constraints/`. The `build/` folder is
+generated output. See the [IDE guide](ide/README.md) for the complete workflow,
+shortcuts, and beta scope. In VS Code, the same launcher is available under
+**Terminal > Run Task > FPGA: Open Beginner IDE**.
+
+For release validation, operations, security reporting, and contributions, see
+[Deployment](docs/DEPLOYMENT.md), [Security](SECURITY.md),
+[Contributing](CONTRIBUTING.md), and the [Changelog](CHANGELOG.md). The project
+is available under the [MIT License](LICENSE).
 
 ## Daily commands
 

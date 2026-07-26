@@ -6,4 +6,6 @@ build/
 *.ghw
 *.log
 obj_dir/
-
+__pycache__/
+*.py[cod]
+.fpga-studio/
