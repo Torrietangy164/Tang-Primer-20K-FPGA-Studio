@@ -13,21 +13,26 @@ Start it from the repository root:
 On Windows, a beginner can also double-click `Open-FPGA-IDE.cmd` in File
 Explorer. The PowerShell launcher starts the GUI without a console window.
 
-Use `-Project projects/02_uart_terminal` to select another project at startup.
+Use `-Project projects/02_uart_terminal` to select another project at startup,
+or `-Theme light` / `-Theme dark` to override the remembered appearance.
 Use `-Console` when diagnosing a GUI startup problem.
 
 ## What is included
 
-- Branded dark workspace, custom icon system, searchable project explorer,
-  open-file tabs, breadcrumbs, bracket matching, and rich editor chrome.
+- Accessible dark and light workspaces, runtime theme switching, persistent
+  preference, custom icon regeneration, searchable project explorer, open-file
+  tabs, breadcrumbs, bracket matching, and rich editor chrome.
 - Module hierarchy plus module, port, signal, parameter, and instance indexing.
 - `Ctrl+Space` completions for HDL keywords, modules, ports, internal signals,
-  and smart snippet aliases such as `fsm`, `sync2`, and `counter`.
+  and 72 smart pattern aliases such as `fsm`, `sync2`, `fifo`, and `counter`.
 - `F12` or `Ctrl+Click` navigation to recognized module definitions.
 - Searchable `Ctrl+Shift+P` command palette and whole-project
   `Ctrl+Shift+F` text search.
-- Reviewed HDL Pattern Library for sequential logic, combinational logic,
-  counters, synchronizers, finite-state machines, and assertions.
+- Searchable HDL Pattern Library with 72 reviewed references across sequential
+  logic, combinational logic, counters/timing, CDC/input handling, state
+  machines, arithmetic, handshakes/interfaces, memories/buffers, and
+  verification. Category and difficulty filters plus clear synthesizable RTL
+  versus simulation-only labels help beginners choose safely.
 - Offline contextual code explanation for selected HDL constructs and symbols.
 - Beginner diagnostics for missing top modules, duplicate modules, incomplete
   constraints/electrical standards, duplicate pins, recursive hierarchy,
@@ -43,6 +48,20 @@ Use `-Console` when diagnosing a GUI startup problem.
   upload, persistent flash, JTAG detection, doctor, UART, setup, and driver
   configuration.
 - Confirmation before persistent flash and a Stop button for running commands.
+
+## Appearance and recovery
+
+Use the theme button in the upper-right header, **View > Dark mode / Light
+mode**, or `Ctrl+Alt+T`. Switching is live: open editors and dialogs remain in
+place, while native Tk widgets, ttk controls, syntax highlighting, menus,
+selections, status colors, tooltips, canvases, and custom icons are rethemed.
+The choice is stored in `.fpga-studio/settings.json`; an invalid or damaged
+preference safely falls back to dark mode.
+
+The release gate validates every semantic color and interaction state against
+contrast targets, starts the full UI in both modes, performs 30 live switches
+with dialogs open, checks icon integrity and editor-state retention, and
+injects a theme failure to prove that the previous palette is restored.
 
 ## Where code belongs
 
@@ -60,6 +79,19 @@ recognizes the common Verilog/SystemVerilog patterns used by these learning
 projects, but it is not a standards-complete language server or a replacement
 for Verilator lint and simulation.
 
+## Using the HDL Pattern Library
+
+Press `Ctrl+Alt+S` to browse all 72 patterns. Search by concept, title, code, or
+alias; for example, try `debounce`, `metastability`, `fifo`, `uart`, or `pwm`.
+Use category and difficulty filters to narrow the list. Every entry explains
+its purpose and identifies whether it belongs in synthesizable RTL or only in
+a testbench.
+
+Patterns are building blocks, not complete hardware specifications. Rename
+signals, define the shown parameters and widths, consider the clock/reset and
+board requirements, then run Smart Check, Verilator lint, and a self-checking
+simulation before building or programming the FPGA.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
@@ -70,6 +102,7 @@ for Verilator lint and simulation.
 | `Ctrl+Shift+P` | Open the searchable command palette |
 | `Ctrl+Shift+F` | Search text throughout the project |
 | `Ctrl+Alt+S` | Open the HDL Pattern Library |
+| `Ctrl+Alt+T` | Toggle dark/light mode |
 | `Ctrl+Shift+E` | Explain selected HDL context |
 | `Ctrl+/` | Toggle line comments |
 | `Ctrl+D` | Duplicate the current line |
@@ -85,5 +118,6 @@ For automated checks without opening a window:
 ```powershell
 python ide\fpga_ide.py --check projects\01_button_led_pwm
 .\FPGA-IDE.ps1 -SmokeTest -Project projects/01_button_led_pwm
+python ide\fpga_ide.py --theme-stress-test --project projects\01_button_led_pwm
 python -m unittest discover -s ide\tests -v
 ```

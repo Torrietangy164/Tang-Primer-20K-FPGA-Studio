@@ -28,7 +28,10 @@ git diff --check
 ```
 
 The release check compiles Python, runs unit and project-intelligence tests,
-parses all PowerShell scripts, validates JSON, and runs HDL lint/simulation.
+validates both theme palettes, starts the complete UI in dark and light modes,
+stress-switches the live interface with dialogs open, verifies failure
+rollback, parses all PowerShell scripts, validates JSON, and runs HDL
+lint/simulation.
 GitHub Actions repeats platform-independent gates for every push and pull
 request.
 
@@ -36,7 +39,7 @@ request.
 
 The application stores local state under `.fpga-studio/`:
 
-- `settings.json` remembers the last selected project.
+- `settings.json` remembers the last selected project and dark/light choice.
 - `logs/studio.log` is a rotating diagnostic log, capped at approximately
   1 MB per file with three backups.
 
@@ -46,6 +49,8 @@ not require an account or network connection after toolchain setup.
 ## Recovery
 
 - UI callback errors are logged and reported without terminating the editor.
+- A failed theme transition restores the previous palette; corrupt theme
+  preferences fall back to dark mode.
 - Build artifacts can be recreated with `./fpga.ps1 clean` followed by build.
 - Upload uses volatile SRAM and is the preferred hardware validation path.
 - Persistent flash is guarded by a confirmation and blocked when smart checks

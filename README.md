@@ -3,6 +3,7 @@
 [![Quality gates](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6c63ff.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-4f9cff.svg)](https://www.python.org/)
+[![Release: v1.1.0](https://img.shields.io/badge/release-v1.1.0-42d392.svg)](CHANGELOG.md)
 
 This folder is configured for the Sipeed Tang Primer 20K core board (`GW2A-LV18PG256C8/I7`), with the Dock carrier as the default pin map and programmer.
 
@@ -18,16 +19,28 @@ Start the graphical interface with one command:
 
 Windows users can alternatively double-click `Open-FPGA-IDE.cmd`.
 
-![Tang Primer FPGA Studio main workspace](docs/images/studio-main.png)
+| Accessible dark mode | New accessible light mode |
+|---|---|
+| ![Tang Primer FPGA Studio dark workspace](docs/images/studio-main.png) | ![Tang Primer FPGA Studio light workspace](docs/images/studio-main-light.png) |
 
 The release workspace includes custom iconography, searchable project
 navigation, open-file tabs, signal/module intelligence, contextual HDL
-explanations, project-wide search, a command palette, reviewed code snippets,
-safe quick fixes, a pin assignment inspector, and a design-health dashboard.
+explanations, project-wide search, a command palette, a searchable library of
+72 reviewed HDL patterns, safe quick fixes, a pin assignment inspector, and a
+design-health dashboard.
 The dashboard turns build reports into timing, utilization, hierarchy,
 artifact, and verification-readiness insights. Live console actions cover
 simulation, GTKWave, lint, debug, build, SRAM upload, persistent flash, JTAG
 detection, hardware diagnosis, UART monitoring, tool setup, and driver setup.
+
+Version 1.1.0 can switch the complete live workspace between dark and light
+modes from the header, **View** menu, or `Ctrl+Alt+T`. The choice is remembered
+locally. Editors, dialogs, menus, selections, syntax colors, status states,
+tooltips, and all custom icons change together without closing files or losing
+work. Both palettes are checked for WCAG contrast, and a release stress test
+switches themes repeatedly with dialogs open and verifies automatic rollback
+after an injected UI failure. To force a startup theme, run
+`./FPGA-IDE.ps1 -Theme light` or `./FPGA-IDE.ps1 -Theme dark`.
 
 ### Intelligent workspace
 
@@ -35,9 +48,13 @@ detection, hardware diagnosis, UART monitoring, tool setup, and driver setup.
 |---|---|
 | ![Project Insights dashboard](docs/images/studio-insights.png) | ![Searchable command palette](docs/images/studio-command-palette.png) |
 
-| Reviewed HDL Pattern Library | Pin and electrical-standard inspection |
+| Searchable 72-pattern HDL reference | Pin and electrical-standard inspection |
 |---|---|
 | ![HDL Pattern Library](docs/images/studio-pattern-library.png) | ![Pin Assignment Inspector](docs/images/studio-pin-inspector.png) |
+
+| Pattern reference in dark mode | The same live dialog in light mode |
+|---|---|
+| ![Dark HDL Pattern Library](docs/images/studio-pattern-library.png) | ![Light HDL Pattern Library](docs/images/studio-pattern-library-light.png) |
 
 The Studio is local and offline after toolchain installation: it requires no
 account, sends no telemetry, contains projects inside the workspace, blocks

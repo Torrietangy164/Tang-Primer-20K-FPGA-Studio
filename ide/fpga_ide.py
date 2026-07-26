@@ -36,110 +36,63 @@ from ide.hdl_intelligence import (  # noqa: E402
     matching_completions,
     scan_project,
 )
+from ide.hdl_patterns import (  # noqa: E402
+    CATEGORIES,
+    DIFFICULTIES,
+    HDLPattern,
+    HDL_SNIPPETS,
+    HDL_SNIPPET_ALIASES,
+    PATTERNS,
+    search_patterns,
+)
 from ide.project_insights import load_project_insights, workflow_steps  # noqa: E402
+from ide.themes import (  # noqa: E402
+    DEFAULT_THEME,
+    HEX_COLOR,
+    THEMES,
+    contrast_ratio,
+    normalize_theme,
+    theme_colors,
+    validate_themes,
+)
 
 
 APP_NAME = "Tang Primer FPGA Studio"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 STATE_ROOT = WORKSPACE_ROOT / ".fpga-studio"
 LOG_PATH = STATE_ROOT / "logs" / "studio.log"
 SETTINGS_PATH = STATE_ROOT / "settings.json"
 LOGGER = logging.getLogger("fpga_studio")
 
-COLORS = {
-    "bg": "#070b14",
-    "header": "#0b1120",
-    "panel": "#0f1728",
-    "panel_alt": "#151f34",
-    "panel_hover": "#1c2a45",
-    "editor": "#0a1020",
-    "border": "#253451",
-    "border_soft": "#1a2740",
-    "text": "#e8f0ff",
-    "muted": "#8b9ab8",
-    "muted_2": "#62718f",
-    "accent": "#6c63ff",
-    "accent_hover": "#817aff",
-    "blue": "#4f9cff",
-    "green": "#42d392",
-    "yellow": "#f4c95d",
-    "red": "#ff647c",
-    "purple": "#c792ea",
-    "cyan": "#56d4dd",
-    "orange": "#ffad66",
-    "selection": "#253c68",
+COLORS = theme_colors(DEFAULT_THEME)
+
+ICON_COLOR_TOKENS = {
+    "chip": "cyan", "play": "green", "wave": "cyan", "lint": "yellow",
+    "bug": "orange", "build": "blue", "upload": "green", "flash": "yellow",
+    "target": "cyan", "doctor": "red", "search": "muted", "sparkle": "purple",
+    "plus": "cyan", "save": "blue", "folder": "yellow", "file": "muted",
+    "code": "purple", "refresh": "muted", "stop": "red", "terminal": "cyan",
+    "dashboard": "green", "bulb": "yellow", "command": "purple", "close": "muted",
+    "theme": "orange",
 }
+
+BACKGROUND_COLOR_TOKENS = (
+    "bg", "header", "panel", "panel_alt", "panel_hover", "editor", "console",
+    "border", "border_soft", "selection", "tooltip", "current_line",
+    "accent", "accent_hover", "success_button", "success_hover",
+    "danger_button", "danger_hover",
+)
+FOREGROUND_COLOR_TOKENS = (
+    "text", "muted", "muted_2", "on_accent", "selection_text", "cursor", "accent_text",
+    "blue", "green", "yellow", "red", "purple", "cyan", "orange",
+    "editor_signal", "editor_comment", "editor_string",
+)
 
 EDITABLE_SUFFIXES = {
     ".v", ".sv", ".vh", ".svh", ".cst", ".psd1", ".ps1", ".md",
     ".txt", ".f", ".gtkw", ".json", ".ys",
 }
 IGNORED_TREE_NAMES = {".git", "__pycache__", ".pytest_cache", "obj_dir"}
-
-HDL_SNIPPETS = {
-    "Clocked register (always_ff)": """always_ff @(posedge clk) begin
-    if (reset) begin
-        value <= '0;
-    end else if (enable) begin
-        value <= next_value;
-    end
-end""",
-    "Combinational logic (always_comb)": """always_comb begin
-    next_value = value;
-    // Override defaults for each condition.
-end""",
-    "Counter with clock enable": """logic [WIDTH-1:0] counter;
-
-always_ff @(posedge clk) begin
-    if (reset) begin
-        counter <= '0;
-    end else if (tick) begin
-        counter <= counter + 1'b1;
-    end
-end""",
-    "Two-flop input synchronizer": """logic async_meta;
-logic async_sync;
-
-always_ff @(posedge clk) begin
-    async_meta <= async_input;
-    async_sync <= async_meta;
-end""",
-    "Safe finite-state machine": """typedef enum logic [1:0] {
-    IDLE,
-    ACTIVE,
-    DONE
-} state_t;
-
-state_t state, next_state;
-
-always_ff @(posedge clk) begin
-    if (reset) state <= IDLE;
-    else       state <= next_state;
-end
-
-always_comb begin
-    next_state = state;
-    unique case (state)
-        IDLE:    if (start) next_state = ACTIVE;
-        ACTIVE:  if (finished) next_state = DONE;
-        DONE:    next_state = IDLE;
-        default: next_state = IDLE;
-    endcase
-end""",
-    "Simulation assertion": """if (actual !== expected) begin
-    $error(\"Mismatch: actual=%0h expected=%0h\", actual, expected);
-    $fatal(1);
-end""",
-}
-HDL_SNIPPET_ALIASES = {
-    "ffreg": "Clocked register (always_ff)",
-    "comb": "Combinational logic (always_comb)",
-    "counter": "Counter with clock enable",
-    "sync2": "Two-flop input synchronizer",
-    "fsm": "Safe finite-state machine",
-    "assertx": "Simulation assertion",
-}
-
 
 def configure_runtime_logging() -> None:
     if LOGGER.handlers:
@@ -269,6 +222,11 @@ class IconFactory:
             rect(2, 10, 5, 15, True); rect(7, 6, 10, 15, True); rect(12, 2, 15, 15, True)
         elif name == "bulb":
             rect(6, 4, 12, 11); line(7, 13, 11, 13); line(8, 15, 10, 15)
+        elif name == "theme":
+            rect(7, 7, 11, 11, True)
+            for values in ((9, 2, 9, 4), (9, 14, 9, 16), (2, 9, 4, 9), (14, 9, 16, 9),
+                           (4, 4, 5, 5), (13, 13, 14, 14), (13, 5, 14, 4), (4, 14, 5, 13)):
+                line(*values)
         elif name == "command":
             rect(2, 3, 16, 15); line(5, 7, 8, 10); line(8, 10, 5, 13); line(10, 13, 14, 13)
         elif name == "close":
@@ -300,7 +258,7 @@ class Tooltip:
         self.window.wm_overrideredirect(True)
         self.window.wm_geometry(f"+{x}+{y}")
         tk.Label(
-            self.window, text=self.text, bg="#202b43", fg=COLORS["text"],
+            self.window, text=self.text, bg=COLORS["tooltip"], fg=COLORS["on_accent"],
             padx=9, pady=5, font=("Segoe UI", 9), relief="solid", borderwidth=1,
         ).pack()
 
@@ -335,29 +293,27 @@ class LineNumberCanvas(tk.Canvas):
 
 
 class FPGAStudio:
-    def __init__(self, root: tk.Tk, initial_project: str | None = None):
+    def __init__(
+        self, root: tk.Tk, initial_project: str | None = None,
+        initial_theme: str | None = None,
+    ):
         configure_runtime_logging()
         self.root = root
         self.settings = load_user_settings()
+        requested_theme = initial_theme if initial_theme is not None else self.settings.get("theme")
+        self.theme_name = normalize_theme(requested_theme)
+        COLORS.clear()
+        COLORS.update(theme_colors(self.theme_name))
+        self.theme_var = tk.StringVar(master=root, value=self.theme_name)
+        self.theme_button_text = tk.StringVar(master=root)
+        self.theme_button_text.set("Light mode" if self.theme_name == "dark" else "Dark mode")
+        self.menus: list[tk.Menu] = []
         self.root.report_callback_exception = self._report_callback_exception
         self.root.title(f"{APP_NAME} — {APP_VERSION}")
         self.root.geometry("1560x940")
         self.root.minsize(1180, 740)
         self.root.configure(bg=COLORS["bg"])
-        self.icon_factory = IconFactory(root)
-        self.icons = {
-            name: self.icon_factory.get(name, color)
-            for name, color in {
-                "chip": COLORS["cyan"], "play": COLORS["green"], "wave": COLORS["cyan"],
-                "lint": COLORS["yellow"], "bug": COLORS["orange"], "build": COLORS["blue"],
-                "upload": COLORS["green"], "flash": COLORS["yellow"], "target": COLORS["cyan"],
-                "doctor": COLORS["red"], "search": COLORS["muted"], "sparkle": COLORS["purple"],
-                "plus": COLORS["cyan"], "save": COLORS["blue"], "folder": COLORS["yellow"],
-                "file": COLORS["muted"], "code": COLORS["purple"], "refresh": COLORS["muted"],
-                "stop": COLORS["red"], "terminal": COLORS["cyan"], "dashboard": COLORS["green"],
-                "bulb": COLORS["yellow"], "command": COLORS["purple"], "close": COLORS["muted"],
-            }.items()
-        }
+        self.icon_factory, self.icons = self._create_icons()
         self.root.iconphoto(True, self.icons["chip"])
 
         self.current_project = WORKSPACE_ROOT
@@ -390,7 +346,288 @@ class FPGAStudio:
         LOGGER.info("Studio %s started; project=%s", APP_VERSION, self._project_relative())
 
     # ------------------------------------------------------------------ UI
+    def _create_icons(self) -> tuple[IconFactory, dict[str, tk.PhotoImage]]:
+        factory = IconFactory(self.root)
+        icons = {
+            name: factory.get(name, COLORS[token])
+            for name, token in ICON_COLOR_TOKENS.items()
+        }
+        icons["chip_large"] = factory.get("chip", COLORS["cyan"], 30)
+        return factory, icons
+
+    @staticmethod
+    def _translated_color(value: object, old_theme: str, tokens: tuple[str, ...]) -> str | None:
+        current = str(value).lower()
+        old_palette = THEMES[old_theme]
+        for token in tokens:
+            if current == old_palette[token].lower():
+                return COLORS[token]
+        return None
+
+    def _walk_widgets(self) -> list[tk.Misc]:
+        widgets: list[tk.Misc] = [self.root]
+        for widget in widgets:
+            try:
+                widgets.extend(widget.winfo_children())
+            except tk.TclError:
+                continue
+        return widgets
+
+    def _image_reference(self, value: object) -> str:
+        """Normalize Tk's string/one-element Tcl tuple image representations."""
+        try:
+            values = self.root.tk.splitlist(value)
+            return str(values[0]) if values else ""
+        except (TypeError, tk.TclError):
+            return str(value)
+
+    def _refresh_widget_images(
+        self, widget: tk.Misc, old_image_names: dict[str, str],
+    ) -> None:
+        try:
+            configuration = widget.configure()
+            if "image" in configuration:
+                current = self._image_reference(widget.cget("image"))
+                if current in old_image_names:
+                    widget.configure(image=self.icons[old_image_names[current]])
+        except (AttributeError, KeyError, tk.TclError):
+            pass
+
+        if isinstance(widget, ttk.Notebook):
+            for tab_id in widget.tabs():
+                try:
+                    current = self._image_reference(widget.tab(tab_id, "image"))
+                    if current in old_image_names:
+                        widget.tab(tab_id, image=self.icons[old_image_names[current]])
+                except (KeyError, tk.TclError):
+                    continue
+
+        if isinstance(widget, ttk.Treeview):
+            pending = list(widget.get_children(""))
+            while pending:
+                item = pending.pop()
+                pending.extend(widget.get_children(item))
+                try:
+                    current = self._image_reference(widget.item(item, "image"))
+                    if current in old_image_names:
+                        widget.item(item, image=self.icons[old_image_names[current]])
+                except (KeyError, tk.TclError):
+                    continue
+
+    def _refresh_widget_colors(self, widget: tk.Misc, old_theme: str) -> None:
+        option_tokens = {
+            "background": BACKGROUND_COLOR_TOKENS,
+            "activebackground": BACKGROUND_COLOR_TOKENS,
+            "disabledbackground": BACKGROUND_COLOR_TOKENS,
+            "fieldbackground": BACKGROUND_COLOR_TOKENS,
+            "highlightbackground": BACKGROUND_COLOR_TOKENS,
+            "highlightcolor": BACKGROUND_COLOR_TOKENS,
+            "selectbackground": BACKGROUND_COLOR_TOKENS,
+            "troughcolor": BACKGROUND_COLOR_TOKENS,
+            "foreground": FOREGROUND_COLOR_TOKENS,
+            "activeforeground": FOREGROUND_COLOR_TOKENS,
+            "disabledforeground": FOREGROUND_COLOR_TOKENS,
+            "insertbackground": ("cursor", "text", "on_accent"),
+            "selectforeground": ("selection_text", "text", "on_accent"),
+        }
+        try:
+            configuration = widget.configure()
+        except (AttributeError, tk.TclError):
+            configuration = {}
+        for option, tokens in option_tokens.items():
+            if option not in configuration:
+                continue
+            try:
+                translated = self._translated_color(widget.cget(option), old_theme, tokens)
+                if translated:
+                    widget.configure(**{option: translated})
+            except (AttributeError, tk.TclError):
+                continue
+
+        if isinstance(widget, tk.Text):
+            for tag in widget.tag_names():
+                for option, tokens in (("foreground", FOREGROUND_COLOR_TOKENS),
+                                       ("background", BACKGROUND_COLOR_TOKENS)):
+                    try:
+                        translated = self._translated_color(widget.tag_cget(tag, option), old_theme, tokens)
+                        if translated:
+                            widget.tag_configure(tag, **{option: translated})
+                    except tk.TclError:
+                        continue
+
+        if isinstance(widget, tk.Canvas):
+            for item in widget.find_all():
+                for option, tokens in (("fill", FOREGROUND_COLOR_TOKENS + BACKGROUND_COLOR_TOKENS),
+                                       ("outline", BACKGROUND_COLOR_TOKENS + FOREGROUND_COLOR_TOKENS)):
+                    try:
+                        translated = self._translated_color(widget.itemcget(item, option), old_theme, tokens)
+                        if translated:
+                            widget.itemconfigure(item, **{option: translated})
+                    except tk.TclError:
+                        continue
+
+        if isinstance(widget, ttk.Treeview):
+            tags: set[str] = set()
+            pending = list(widget.get_children(""))
+            while pending:
+                item = pending.pop()
+                pending.extend(widget.get_children(item))
+                tags.update(str(tag) for tag in widget.item(item, "tags"))
+            for tag in tags:
+                for option, tokens in (("foreground", FOREGROUND_COLOR_TOKENS),
+                                       ("background", BACKGROUND_COLOR_TOKENS)):
+                    try:
+                        translated = self._translated_color(widget.tag_configure(tag, option), old_theme, tokens)
+                        if translated:
+                            widget.tag_configure(tag, **{option: translated})
+                    except tk.TclError:
+                        continue
+
+    def _refresh_menu_theme(self, menu: tk.Menu, old_image_names: dict[str, str]) -> None:
+        try:
+            menu.configure(
+                bg=COLORS["panel"], fg=COLORS["text"], activebackground=COLORS["selection"],
+                activeforeground=COLORS["selection_text"], selectcolor=COLORS["accent"],
+            )
+            end = menu.index("end")
+            if end is None:
+                return
+            for index in range(end + 1):
+                try:
+                    current = self._image_reference(menu.entrycget(index, "image"))
+                    if current in old_image_names:
+                        menu.entryconfigure(index, image=self.icons[old_image_names[current]])
+                except tk.TclError:
+                    continue
+        except tk.TclError:
+            LOGGER.debug("A closing menu could not be rethemed", exc_info=True)
+
+    def _configure_semantic_tags(self) -> None:
+        if hasattr(self, "console"):
+            self.console.tag_configure("command", foreground=COLORS["cyan"])
+            self.console.tag_configure("success", foreground=COLORS["green"])
+            self.console.tag_configure("warning", foreground=COLORS["yellow"])
+            self.console.tag_configure("error", foreground=COLORS["red"])
+            self.console.tag_configure("muted", foreground=COLORS["muted"])
+        if hasattr(self, "problems_tree"):
+            self.problems_tree.tag_configure("error", foreground=COLORS["red"])
+            self.problems_tree.tag_configure("warning", foreground=COLORS["yellow"])
+            self.problems_tree.tag_configure("info", foreground=COLORS["cyan"])
+        if hasattr(self, "coach"):
+            self.coach.tag_configure("title", foreground=COLORS["cyan"])
+            self.coach.tag_configure("heading", foreground=COLORS["accent_text"])
+            self.coach.tag_configure("good", foreground=COLORS["green"])
+            self.coach.tag_configure("warning", foreground=COLORS["yellow"])
+            self.coach.tag_configure("muted", foreground=COLORS["muted"])
+        if hasattr(self, "insights"):
+            self.insights.tag_configure("score", foreground=COLORS["green"])
+            self.insights.tag_configure("title", foreground=COLORS["text"])
+            self.insights.tag_configure("heading", foreground=COLORS["cyan"])
+            self.insights.tag_configure("good", foreground=COLORS["green"])
+            self.insights.tag_configure("next", foreground=COLORS["yellow"])
+            self.insights.tag_configure("blocked", foreground=COLORS["red"])
+            self.insights.tag_configure("muted", foreground=COLORS["muted"])
+        if hasattr(self, "editor"):
+            self._configure_editor_tags()
+
+    def _sync_theme_controls(self) -> None:
+        self.theme_var.set(self.theme_name)
+        self.theme_button_text.set("Light mode" if self.theme_name == "dark" else "Dark mode")
+
+    def _apply_theme_visuals(
+        self, target: str, previous: str,
+        legacy_icon_sets: tuple[dict[str, tk.PhotoImage], ...] = (),
+    ) -> None:
+        old_icons = self.icons
+        old_image_names = {str(image): name for name, image in old_icons.items()}
+        for icon_set in legacy_icon_sets:
+            old_image_names.update({str(image): name for name, image in icon_set.items()})
+        COLORS.clear()
+        COLORS.update(theme_colors(target))
+        new_factory, new_icons = self._create_icons()
+        self.icon_factory = new_factory
+        self.icons = new_icons
+        self.root.configure(bg=COLORS["bg"])
+        self.root.iconphoto(True, self.icons["chip"])
+        self._configure_styles()
+        for widget in self._walk_widgets():
+            self._refresh_widget_colors(widget, previous)
+            self._refresh_widget_images(widget, old_image_names)
+        for menu in self.menus:
+            self._refresh_menu_theme(menu, old_image_names)
+        self._configure_semantic_tags()
+        if hasattr(self, "line_numbers"):
+            self.line_numbers.redraw()
+        # Keep the replaced PhotoImages alive until Tk has processed every update.
+        self.root.after_idle(lambda retained=old_icons: retained.clear())
+
+    def set_theme(self, name: str, *, persist: bool = True, announce: bool = True) -> bool:
+        """Apply a theme atomically; recover the previous palette on failure."""
+        target = name.strip().lower() if isinstance(name, str) else ""
+        if target not in THEMES:
+            LOGGER.warning("Rejected unknown theme: %r", name)
+            self._sync_theme_controls()
+            return False
+        if target == self.theme_name:
+            self._sync_theme_controls()
+            return True
+
+        previous = self.theme_name
+        previous_setting = self.settings.get("theme")
+        original_icons = self.icons
+        try:
+            self._apply_theme_visuals(target, previous)
+            self.theme_name = target
+            self._sync_theme_controls()
+            if persist:
+                self.settings["theme"] = target
+                save_user_settings(self.settings)
+            if announce and hasattr(self, "status_text"):
+                self.status_text.set(f"{target.title()} theme enabled")
+            LOGGER.info("Theme switched from %s to %s", previous, target)
+            return True
+        except Exception as error:  # UI recovery boundary: Tk can raise many platform-specific errors.
+            LOGGER.exception("Theme switch from %s to %s failed", previous, target)
+            try:
+                current = target
+                self._apply_theme_visuals(previous, current, (original_icons,))
+            except Exception:
+                LOGGER.critical("Theme rollback also failed", exc_info=True)
+                COLORS.clear()
+                COLORS.update(theme_colors(previous))
+            self.theme_name = previous
+            self._sync_theme_controls()
+            if previous_setting is None:
+                self.settings.pop("theme", None)
+            else:
+                self.settings["theme"] = previous_setting
+            if announce:
+                try:
+                    messagebox.showerror(
+                        "Theme switch recovered",
+                        f"The {target} theme could not be applied. The IDE restored {previous} mode.\n\n"
+                        f"Details: {LOG_PATH}\n\n{error}",
+                        parent=self.root,
+                    )
+                except tk.TclError:
+                    pass
+            return False
+
+    def toggle_theme(self, _event=None) -> str | None:
+        target = "light" if self.theme_name == "dark" else "dark"
+        self.set_theme(target)
+        return "break" if _event is not None else None
+
     def _configure_styles(self) -> None:
+        # ttk combobox pop-down lists are native Tk children, not ttk style
+        # elements, so their colors must follow the palette via the option DB.
+        for pattern, value in (
+            ("*TCombobox*Listbox.background", COLORS["panel_alt"]),
+            ("*TCombobox*Listbox.foreground", COLORS["text"]),
+            ("*TCombobox*Listbox.selectBackground", COLORS["selection"]),
+            ("*TCombobox*Listbox.selectForeground", COLORS["selection_text"]),
+        ):
+            self.root.option_add(pattern, value, 80)
         style = ttk.Style(self.root)
         style.theme_use("clam")
         style.configure(".", background=COLORS["panel"], foreground=COLORS["text"],
@@ -415,15 +652,15 @@ class FPGAStudio:
                         padding=(9, 6), borderwidth=1)
         style.map("TButton", background=[("active", COLORS["border"]), ("disabled", COLORS["panel"])],
                   foreground=[("disabled", COLORS["muted"])])
-        style.configure("Accent.TButton", background=COLORS["accent"], foreground="#ffffff")
+        style.configure("Accent.TButton", background=COLORS["accent"], foreground=COLORS["on_accent"])
         style.map("Accent.TButton", background=[("active", COLORS["accent_hover"]),
                                                 ("disabled", COLORS["border"])])
-        style.configure("Success.TButton", background="#19734a", foreground="#ffffff")
-        style.map("Success.TButton", background=[("active", "#238d5c")])
-        style.configure("Danger.TButton", background="#7b2937", foreground="#ffffff")
+        style.configure("Success.TButton", background=COLORS["success_button"], foreground=COLORS["on_accent"])
+        style.map("Success.TButton", background=[("active", COLORS["success_hover"])])
+        style.configure("Danger.TButton", background=COLORS["danger_button"], foreground=COLORS["on_accent"])
         style.map(
             "Danger.TButton",
-            background=[("active", "#9b3445"), ("disabled", COLORS["panel_alt"])],
+            background=[("active", COLORS["danger_hover"]), ("disabled", COLORS["panel_alt"])],
             foreground=[("disabled", COLORS["muted_2"])],
         )
         style.configure("Toolbar.TButton", background=COLORS["header"], foreground=COLORS["text"],
@@ -452,6 +689,16 @@ class FPGAStudio:
                   foreground=[("selected", COLORS["text"])])
         style.configure("TCombobox", fieldbackground=COLORS["panel_alt"], foreground=COLORS["text"],
                         arrowcolor=COLORS["text"])
+        style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", COLORS["panel_alt"]), ("disabled", COLORS["panel"])],
+            foreground=[("readonly", COLORS["text"]), ("disabled", COLORS["muted"])],
+            selectbackground=[("readonly", COLORS["selection"])],
+            selectforeground=[("readonly", COLORS["selection_text"])],
+        )
+        style.configure("TEntry", fieldbackground=COLORS["panel_alt"], foreground=COLORS["text"],
+                        insertcolor=COLORS["cursor"], bordercolor=COLORS["border"])
+        style.map("TEntry", fieldbackground=[("disabled", COLORS["panel"]), ("focus", COLORS["panel_alt"])])
         style.configure("Horizontal.TProgressbar", background=COLORS["accent"],
                         troughcolor=COLORS["panel_alt"], borderwidth=0, thickness=7)
 
@@ -467,14 +714,21 @@ class FPGAStudio:
             exc_info=(exception_type, exception_value, exception_traceback),
         )
         if hasattr(self, "console"):
-            self._append_console(
-                f"\nUnexpected IDE error: {exception_value}\nDetails: {LOG_PATH}\n", "error",
+            try:
+                self._append_console(
+                    f"\nUnexpected IDE error: {exception_value}\nDetails: {LOG_PATH}\n", "error",
+                )
+            except tk.TclError:
+                LOGGER.debug("The console was unavailable while reporting an error", exc_info=True)
+        try:
+            messagebox.showerror(
+                "Tang Primer Studio recovered from an error",
+                f"The operation could not finish, but the IDE is still running.\n\n"
+                f"{exception_value}\n\nDiagnostic log: {LOG_PATH}",
+                parent=self.root,
             )
-        messagebox.showerror(
-            "Tang Primer Studio recovered from an error",
-            f"The operation could not finish, but the IDE is still running.\n\n"
-            f"{exception_value}\n\nDiagnostic log: {LOG_PATH}",
-        )
+        except tk.TclError:
+            LOGGER.debug("The error dialog could not be shown during shutdown", exc_info=True)
 
     def _action_button(
         self, parent: tk.Misc, text: str, icon: str, command, style: str = "Toolbar.TButton",
@@ -519,6 +773,20 @@ class FPGAStudio:
         edit_menu.add_command(label="Toggle line comment", accelerator="Ctrl+/", command=self.toggle_line_comment)
         edit_menu.add_command(label="Duplicate line", accelerator="Ctrl+D", command=self.duplicate_line)
         menu.add_cascade(label="Edit", menu=edit_menu)
+
+        view_menu = tk.Menu(menu, tearoff=False, bg=COLORS["panel"], fg=COLORS["text"],
+                            activebackground=COLORS["selection"])
+        view_menu.add_radiobutton(
+            label="Dark mode", value="dark", variable=self.theme_var,
+            command=lambda: self.set_theme(self.theme_var.get()),
+        )
+        view_menu.add_radiobutton(
+            label="Light mode", value="light", variable=self.theme_var,
+            command=lambda: self.set_theme(self.theme_var.get()),
+        )
+        view_menu.add_separator()
+        view_menu.add_command(label="Toggle theme", accelerator="Ctrl+Alt+T", command=self.toggle_theme)
+        menu.add_cascade(label="View", menu=view_menu)
 
         run_menu = tk.Menu(menu, tearoff=False, bg=COLORS["panel"], fg=COLORS["text"],
                            activebackground=COLORS["selection"])
@@ -571,6 +839,9 @@ class FPGAStudio:
         help_menu.add_command(label="Beginner workflow", command=self.show_beginner_guide)
         help_menu.add_command(label="About", command=self.show_about)
         menu.add_cascade(label="Help", menu=help_menu)
+        self.menus = [menu, file_menu, edit_menu, view_menu, run_menu, tools_menu, help_menu]
+        for current_menu in self.menus:
+            self._refresh_menu_theme(current_menu, {})
         self.root.configure(menu=menu)
 
     def _build_layout(self) -> None:
@@ -595,6 +866,11 @@ class FPGAStudio:
         self.project_combo.bind("<<ComboboxSelected>>", self._project_selected)
 
         top.columnconfigure(2, weight=1)
+        self.theme_button = self._action_button(
+            top, "", "theme", self.toggle_theme, tooltip="Switch between accessible dark and light modes",
+        )
+        self.theme_button.configure(textvariable=self.theme_button_text)
+        self.theme_button.grid(row=0, column=2, sticky="e")
 
         tk.Frame(self.root, bg=COLORS["accent"], height=2).pack(fill="x")
         toolbar = ttk.Frame(self.root, style="Header.TFrame", padding=(14, 6, 14, 7))
@@ -716,7 +992,7 @@ class FPGAStudio:
         tk.Label(filter_frame, image=self.icons["search"], bg=COLORS["panel_alt"]).pack(side="left", padx=(7, 3))
         self.file_filter = tk.Entry(
             filter_frame, textvariable=self.file_filter_var, bg=COLORS["panel_alt"], fg=COLORS["text"],
-            insertbackground=COLORS["text"], relief="flat", font=("Segoe UI", 9),
+            insertbackground=COLORS["cursor"], relief="flat", font=("Segoe UI", 9),
         )
         self.file_filter.pack(side="left", fill="x", expand=True, padx=(0, 6), pady=6)
         footer = ttk.Frame(parent, padding=(2, 7, 2, 2))
@@ -765,7 +1041,8 @@ class FPGAStudio:
         self.editor = tk.Text(
             code_frame, undo=True, wrap="none", height=12,
             background=COLORS["editor"], foreground=COLORS["text"],
-            insertbackground="#ffffff", selectbackground=COLORS["selection"], relief="flat",
+            insertbackground=COLORS["cursor"], selectbackground=COLORS["selection"],
+            selectforeground=COLORS["selection_text"], relief="flat",
             padx=12, pady=10, font=("Cascadia Code", 11), tabs=(32,), maxundo=500,
             spacing1=1, spacing3=1,
         )
@@ -794,8 +1071,8 @@ class FPGAStudio:
         self._action_button(console_header, "Clear", "close", self.clear_console, "Ghost.TButton",
                             "Clear console output").pack(side="right")
         self.console = tk.Text(
-            console_card, wrap="word", height=7, state="disabled", background="#080d17",
-            foreground=COLORS["text"], insertbackground="#ffffff", relief="flat", padx=9, pady=7,
+            console_card, wrap="word", height=7, state="disabled", background=COLORS["console"],
+            foreground=COLORS["text"], insertbackground=COLORS["cursor"], relief="flat", padx=9, pady=7,
             font=("Cascadia Mono", 9), spacing1=1, spacing3=1,
         )
         console_scroll = ttk.Scrollbar(console_card, orient="vertical", command=self.console.yview)
@@ -865,7 +1142,7 @@ class FPGAStudio:
         self.coach.pack(side="left", fill="both", expand=True)
         coach_scroll.pack(side="right", fill="y")
         self.coach.tag_configure("title", foreground=COLORS["cyan"], font=("Segoe UI Semibold", 13))
-        self.coach.tag_configure("heading", foreground=COLORS["accent_hover"], font=("Segoe UI Semibold", 10))
+        self.coach.tag_configure("heading", foreground=COLORS["accent_text"], font=("Segoe UI Semibold", 10))
         self.coach.tag_configure("good", foreground=COLORS["green"])
         self.coach.tag_configure("warning", foreground=COLORS["yellow"])
         self.coach.tag_configure("muted", foreground=COLORS["muted"])
@@ -889,14 +1166,14 @@ class FPGAStudio:
     def _configure_editor_tags(self) -> None:
         self.editor.tag_configure("keyword", foreground=COLORS["purple"])
         self.editor.tag_configure("module", foreground=COLORS["cyan"])
-        self.editor.tag_configure("signal", foreground="#9cdcfe")
-        self.editor.tag_configure("comment", foreground="#6f819e")
-        self.editor.tag_configure("string", foreground="#a6e3a1")
+        self.editor.tag_configure("signal", foreground=COLORS["editor_signal"])
+        self.editor.tag_configure("comment", foreground=COLORS["editor_comment"])
+        self.editor.tag_configure("string", foreground=COLORS["editor_string"])
         self.editor.tag_configure("number", foreground=COLORS["orange"])
         self.editor.tag_configure("directive", foreground=COLORS["yellow"])
-        self.editor.tag_configure("current_line", background="#121e33")
+        self.editor.tag_configure("current_line", background=COLORS["current_line"])
         self.editor.tag_configure("matching_bracket", background=COLORS["selection"],
-                                  foreground="#ffffff", font=("Cascadia Code", 11, "bold"))
+                                  foreground=COLORS["selection_text"], font=("Cascadia Code", 11, "bold"))
 
     def _bind_shortcuts(self) -> None:
         self.root.bind_all("<Control-s>", lambda _event: self.save_file())
@@ -909,6 +1186,7 @@ class FPGAStudio:
         self.root.bind_all("<Control-Shift-P>", lambda _event: self.show_command_palette())
         self.root.bind_all("<Control-Shift-F>", lambda _event: self.show_project_search())
         self.root.bind_all("<Control-Alt-s>", lambda _event: self.show_snippets())
+        self.root.bind_all("<Control-Alt-t>", self.toggle_theme)
         self.root.bind_all("<Control-Shift-E>", lambda _event: self.explain_current_code())
         self.editor.bind("<Control-space>", self.show_completion)
         self.editor.bind("<F12>", self.go_to_definition)
@@ -963,6 +1241,7 @@ class FPGAStudio:
             return
         self.current_project = path.resolve()
         self.settings["last_project"] = self._project_relative()
+        self.settings["theme"] = self.theme_name
         save_user_settings(self.settings)
         LOGGER.info("Project selected: %s", self.current_project)
         self.current_file = None
@@ -1570,6 +1849,7 @@ class FPGAStudio:
                           "• Ctrl+Shift+P: searchable command palette\n"
                           "• Ctrl+Shift+F: search every project source\n"
                           "• Ctrl+Alt+S: insert verified HDL patterns\n"
+                          "• Ctrl+Alt+T: switch accessible dark/light mode\n"
                           "• Insights: timing, utilization, artifacts, and hardware readiness\n")
         self.coach.configure(state="disabled")
 
@@ -1598,6 +1878,7 @@ class FPGAStudio:
             ("Code: Insert HDL snippet", "Use a reviewed sequential/combinational pattern", "Ctrl+Alt+S", self.show_snippets),
             ("Code: Explain selection", "Explain the current HDL construct and safer usage", "Ctrl+Shift+E", self.explain_current_code),
             ("Code: Search project", "Find text across sources, constraints and docs", "Ctrl+Shift+F", self.show_project_search),
+            ("View: Toggle dark/light mode", "Switch the complete live workspace theme", "Ctrl+Alt+T", self.toggle_theme),
             ("Intelligence: Smart check", "Refresh actionable design diagnostics", "", lambda: self.analyze_project(True)),
             ("Intelligence: Project insights", "Review health, timing, utilization and readiness", "", self.show_project_insights),
             ("Intelligence: Inspect pin map", "Review signal, package pin, voltage standard and source line", "", self.show_pin_inspector),
@@ -1625,11 +1906,11 @@ class FPGAStudio:
                  font=("Segoe UI", 9)).pack(anchor="w")
         query = tk.StringVar()
         entry = tk.Entry(shell, textvariable=query, bg=COLORS["panel_alt"], fg=COLORS["text"],
-                         insertbackground=COLORS["text"], relief="flat", font=("Segoe UI", 12))
+                         insertbackground=COLORS["cursor"], relief="flat", font=("Segoe UI", 12))
         entry.pack(fill="x", padx=16, ipady=9)
         listbox = tk.Listbox(
             shell, bg=COLORS["panel"], fg=COLORS["text"], selectbackground=COLORS["selection"],
-            selectforeground=COLORS["text"], relief="flat", activestyle="none", font=("Segoe UI", 10),
+            selectforeground=COLORS["selection_text"], relief="flat", activestyle="none", font=("Segoe UI", 10),
             highlightthickness=0,
         )
         listbox.pack(fill="both", expand=True, padx=12, pady=(8, 3))
@@ -1690,7 +1971,7 @@ class FPGAStudio:
         query = tk.StringVar()
         search_entry = tk.Entry(
             shell, textvariable=query, bg=COLORS["panel_alt"], fg=COLORS["text"],
-            insertbackground=COLORS["text"], relief="flat", font=("Segoe UI", 11),
+            insertbackground=COLORS["cursor"], relief="flat", font=("Segoe UI", 11),
         )
         search_entry.pack(fill="x", ipady=8)
         result_tree = ttk.Treeview(shell, columns=("file", "line", "preview"), show="headings")
@@ -1764,70 +2045,165 @@ class FPGAStudio:
         search_entry.focus_set()
 
     def show_snippets(self) -> None:
-        if self.current_file is None or self.current_file.suffix.lower() not in HDL_SUFFIXES:
-            messagebox.showinfo("HDL snippets", "Open a Verilog/SystemVerilog file before inserting a snippet.")
-            return
+        can_insert = self.current_file is not None and self.current_file.suffix.lower() in HDL_SUFFIXES
         window = tk.Toplevel(self.root)
         window.title("HDL Pattern Library")
-        self._center_toplevel(window, 920, 600)
+        self._center_toplevel(window, 1160, 800)
         shell = ttk.Frame(window, padding=14)
         shell.pack(fill="both", expand=True)
         ttk.Label(shell, image=self.icons["sparkle"], text="  HDL Pattern Library", compound="left",
                   font=("Segoe UI Semibold", 16)).pack(anchor="w")
-        ttk.Label(shell, text="Reviewed starter patterns with synthesis-safe defaults",
-                  style="Muted.TLabel").pack(anchor="w", pady=(0, 10))
+        ttk.Label(
+            shell,
+            text=f"{len(PATTERNS)} reviewed references with scope, difficulty, explanation, and insertion-ready code",
+            style="Muted.TLabel",
+        ).pack(anchor="w", pady=(0, 10))
+
+        controls = ttk.Frame(shell)
+        controls.pack(fill="x", pady=(0, 10))
+        query = tk.StringVar()
+        category = tk.StringVar(value="All categories")
+        difficulty = tk.StringVar(value="All levels")
+        result_count = tk.StringVar()
+        ttk.Label(controls, image=self.icons["search"], text="  Search", compound="left",
+                  style="Muted.TLabel").pack(side="left", padx=(0, 7))
+        search_entry = ttk.Entry(controls, textvariable=query)
+        search_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        category_box = ttk.Combobox(
+            controls, textvariable=category, state="readonly",
+            values=("All categories", *CATEGORIES), width=25,
+        )
+        category_box.pack(side="left", padx=(0, 8))
+        difficulty_box = ttk.Combobox(
+            controls, textvariable=difficulty, state="readonly",
+            values=("All levels", *DIFFICULTIES), width=14,
+        )
+        difficulty_box.pack(side="left", padx=(0, 8))
+        ttk.Label(controls, textvariable=result_count, style="Muted.TLabel", width=12).pack(side="right")
+
         body = ttk.Panedwindow(shell, orient="horizontal")
-        body.pack(fill="both", expand=True)
         left = ttk.Frame(body)
         right = ttk.Frame(body)
         body.add(left, weight=2)
         body.add(right, weight=5)
-        names = list(HDL_SNIPPETS)
+        matches: list[HDLPattern] = []
+        list_frame = ttk.Frame(left)
+        list_frame.pack(fill="both", expand=True, padx=(0, 8))
         listbox = tk.Listbox(
-            left, bg=COLORS["panel_alt"], fg=COLORS["text"], selectbackground=COLORS["selection"],
-            selectforeground=COLORS["text"], relief="flat", activestyle="none", font=("Segoe UI", 10),
-            width=31,
+            list_frame, bg=COLORS["panel_alt"], fg=COLORS["text"], selectbackground=COLORS["selection"],
+            selectforeground=COLORS["selection_text"], relief="flat", activestyle="none", font=("Segoe UI", 10),
+            width=39, exportselection=False,
         )
-        listbox.pack(fill="both", expand=True, padx=(0, 8))
-        for name in names:
-            listbox.insert("end", "  " + name)
+        list_scroll = ttk.Scrollbar(list_frame, orient="vertical", command=listbox.yview)
+        listbox.configure(yscrollcommand=list_scroll.set)
+        listbox.pack(side="left", fill="both", expand=True)
+        list_scroll.pack(side="right", fill="y")
+
+        pattern_title = tk.StringVar()
+        pattern_meta = tk.StringVar()
+        pattern_summary = tk.StringVar()
+        ttk.Label(right, textvariable=pattern_title, font=("Segoe UI Semibold", 13),
+                  foreground=COLORS["cyan"]).pack(anchor="w")
+        ttk.Label(right, textvariable=pattern_meta, style="Muted.TLabel").pack(anchor="w", pady=(2, 5))
+        ttk.Label(right, textvariable=pattern_summary, wraplength=720, justify="left").pack(
+            anchor="w", fill="x", pady=(0, 9),
+        )
+        preview_frame = ttk.Frame(right)
+        preview_frame.pack(fill="both", expand=True)
         preview = tk.Text(
-            right, bg=COLORS["editor"], fg=COLORS["text"], insertbackground=COLORS["text"],
+            preview_frame, bg=COLORS["editor"], fg=COLORS["text"], insertbackground=COLORS["cursor"],
             relief="flat", font=("Cascadia Code", 10), padx=12, pady=12, wrap="none", state="disabled",
             width=58,
         )
-        preview.pack(fill="both", expand=True)
+        preview_y = ttk.Scrollbar(preview_frame, orient="vertical", command=preview.yview)
+        preview_x = ttk.Scrollbar(preview_frame, orient="horizontal", command=preview.xview)
+        preview.configure(yscrollcommand=preview_y.set, xscrollcommand=preview_x.set)
+        preview.grid(row=0, column=0, sticky="nsew")
+        preview_y.grid(row=0, column=1, sticky="ns")
+        preview_x.grid(row=1, column=0, sticky="ew")
+        preview_frame.rowconfigure(0, weight=1)
+        preview_frame.columnconfigure(0, weight=1)
+
         footer = ttk.Frame(shell, padding=(0, 10, 0, 0))
-        footer.pack(fill="x")
-        ttk.Label(footer, text="The snippet is inserted using the current line indentation.",
-                  style="Muted.TLabel").pack(side="left")
+        footer.pack(side="bottom", fill="x")
+        footer_hint = (
+            "Insert uses the current line indentation. Review parameters and simulate after adapting."
+            if can_insert else
+            "Reference mode: open a Verilog/SystemVerilog file to enable insertion."
+        )
+        ttk.Label(footer, text=footer_hint, style="Muted.TLabel").pack(side="left")
         insert_button = self._action_button(footer, "Insert pattern", "plus", lambda: insert_selected(),
                                             "Accent.TButton")
         insert_button.pack(side="right")
+        copy_button = ttk.Button(footer, text="Copy code", command=lambda: copy_selected())
+        copy_button.pack(side="right", padx=(0, 8))
+        body.pack(fill="both", expand=True)
 
-        def selected_name() -> str:
+        def selected_pattern() -> HDLPattern | None:
             selection = listbox.curselection()
-            return names[selection[0]] if selection else names[0]
+            if not selection or selection[0] >= len(matches):
+                return None
+            return matches[selection[0]]
 
         def refresh_preview(_event=None) -> None:
-            value = HDL_SNIPPETS[selected_name()]
+            pattern = selected_pattern()
             preview.configure(state="normal")
             preview.delete("1.0", "end")
-            preview.insert("1.0", value)
+            if pattern is None:
+                pattern_title.set("No matching patterns")
+                pattern_meta.set("Try another search term or filter.")
+                pattern_summary.set("")
+                insert_button.configure(state="disabled")
+                copy_button.configure(state="disabled")
+            else:
+                scope = "SYNTHESIZABLE RTL" if pattern.synthesizable else "SIMULATION ONLY"
+                aliases = ", ".join(pattern.aliases)
+                pattern_title.set(pattern.title)
+                pattern_meta.set(
+                    f"{pattern.category}  |  {pattern.difficulty}  |  {scope}  |  aliases: {aliases}"
+                )
+                pattern_summary.set(pattern.summary)
+                preview.insert("1.0", pattern.code)
+                insert_button.configure(state="normal" if can_insert else "disabled")
+                copy_button.configure(state="normal")
             preview.configure(state="disabled")
 
         def insert_selected(_event=None) -> None:
-            name = selected_name()
-            self._insert_snippet(HDL_SNIPPETS[name])
-            self.status_text.set(f"Inserted pattern: {name}")
+            pattern = selected_pattern()
+            if pattern is None or not can_insert:
+                return
+            self._insert_snippet(pattern.code)
+            self.status_text.set(f"Inserted pattern: {pattern.title}")
             window.destroy()
+
+        def copy_selected() -> None:
+            pattern = selected_pattern()
+            if pattern is None:
+                return
+            self.root.clipboard_clear()
+            self.root.clipboard_append(pattern.code)
+            self.status_text.set(f"Copied pattern: {pattern.title}")
+
+        def refresh_results(*_args) -> None:
+            matches[:] = search_patterns(query.get(), category.get(), difficulty.get())
+            listbox.delete(0, "end")
+            for pattern in matches:
+                listbox.insert("end", "  " + pattern.title)
+            result_count.set(f"{len(matches)} / {len(PATTERNS)}")
+            if matches:
+                listbox.selection_set(0)
+                listbox.activate(0)
+            refresh_preview()
 
         listbox.bind("<<ListboxSelect>>", refresh_preview)
         listbox.bind("<Double-1>", insert_selected)
+        query.trace_add("write", refresh_results)
+        category_box.bind("<<ComboboxSelected>>", refresh_results)
+        difficulty_box.bind("<<ComboboxSelected>>", refresh_results)
+        window.bind("<Control-f>", lambda _event: search_entry.focus_set())
         window.bind("<Escape>", lambda _event: window.destroy())
-        listbox.selection_set(0)
-        refresh_preview()
-        listbox.focus_set()
+        refresh_results()
+        search_entry.focus_set()
 
     def _insert_snippet(self, snippet: str) -> None:
         line_start = self.editor.get("insert linestart", "insert")
@@ -2355,14 +2731,15 @@ def check_project(project: Path) -> int:
     return 1 if any(item.severity == "error" for item in index.diagnostics) else 0
 
 
-def smoke_test_ui(project_name: str | None) -> int:
+def smoke_test_ui(project_name: str | None, theme_name: str | None = None) -> int:
     """Construct the complete interface without entering the interactive loop."""
     root = tk.Tk()
     root.withdraw()
-    studio = FPGAStudio(root, initial_project=project_name)
+    studio = FPGAStudio(root, initial_project=project_name, initial_theme=theme_name)
     root.update_idletasks()
     payload = {
         "window": root.title(),
+        "theme": studio.theme_name,
         "project": studio._project_relative(),
         "modules": sorted(studio.current_index.modules),
         "diagnostics": len(studio.current_index.diagnostics),
@@ -2370,6 +2747,129 @@ def smoke_test_ui(project_name: str | None) -> int:
     print(json.dumps(payload, indent=2))
     root.destroy()
     return 0
+
+
+def stress_test_themes(project_name: str | None) -> int:
+    """Exercise live theming, open dialogs, icons, state retention, and rollback."""
+    palette_problems = validate_themes()
+    if palette_problems:
+        print(json.dumps({"passed": False, "palette_errors": palette_problems}, indent=2))
+        return 1
+
+    root = tk.Tk()
+    root.withdraw()
+    studio = FPGAStudio(root, initial_project=project_name, initial_theme="dark")
+    try:
+        studio.show_snippets()
+        studio.show_command_palette()
+        studio.show_pin_inspector()
+        root.update_idletasks()
+        editor_before = studio.editor.get("1.0", "end-1c")
+        open_windows = len([widget for widget in studio._walk_widgets() if isinstance(widget, tk.Toplevel)])
+
+        for cycle in range(30):
+            target = "light" if cycle % 2 == 0 else "dark"
+            if not studio.set_theme(target, persist=False, announce=False):
+                raise RuntimeError(f"Theme switch failed during cycle {cycle}: {target}")
+            root.update_idletasks()
+            if studio.editor.get("1.0", "end-1c") != editor_before:
+                raise RuntimeError("Editor content changed during a theme switch")
+            if studio.editor.cget("background").lower() != COLORS["editor"]:
+                raise RuntimeError("Editor background did not follow the active theme")
+            if studio.editor.cget("foreground").lower() != COLORS["text"]:
+                raise RuntimeError("Editor text did not follow the active theme")
+            if any(image.width() < 1 or image.height() < 1 for image in studio.icons.values()):
+                raise RuntimeError("An icon became invalid during a theme switch")
+
+        if studio.set_theme("not-a-theme", persist=False, announce=False):
+            raise RuntimeError("An unknown theme was unexpectedly accepted")
+        if studio.theme_name != "dark":
+            raise RuntimeError("Rejecting an unknown theme changed the active theme")
+
+        original_configure_styles = studio._configure_styles
+        failure_injected = False
+
+        def fail_once() -> None:
+            nonlocal failure_injected
+            if not failure_injected:
+                failure_injected = True
+                raise tk.TclError("injected theme failure")
+            original_configure_styles()
+
+        studio._configure_styles = fail_once  # type: ignore[method-assign]
+        if studio.set_theme("light", persist=False, announce=False):
+            raise RuntimeError("Injected theme failure did not trigger recovery")
+        studio._configure_styles = original_configure_styles  # type: ignore[method-assign]
+        root.update_idletasks()
+        if studio.theme_name != "dark" or COLORS != THEMES["dark"]:
+            raise RuntimeError("Theme failure did not restore the previous palette")
+
+        current_image_names = {str(image) for image in studio.icons.values()}
+        stale_images: list[str] = []
+        for widget in studio._walk_widgets():
+            try:
+                if "image" in widget.configure():
+                    reference = studio._image_reference(widget.cget("image"))
+                    if reference and reference not in current_image_names:
+                        stale_images.append(f"{widget.winfo_class()}:{reference}")
+            except (AttributeError, tk.TclError):
+                continue
+            if isinstance(widget, ttk.Treeview):
+                pending = list(widget.get_children(""))
+                while pending:
+                    item = pending.pop()
+                    pending.extend(widget.get_children(item))
+                    reference = studio._image_reference(widget.item(item, "image"))
+                    if reference and reference not in current_image_names:
+                        stale_images.append(f"Treeview item:{reference}")
+        for menu in studio.menus:
+            end = menu.index("end")
+            for index in range((end if end is not None else -1) + 1):
+                try:
+                    reference = studio._image_reference(menu.entrycget(index, "image"))
+                    if reference and reference not in current_image_names:
+                        stale_images.append(f"Menu item:{reference}")
+                except tk.TclError:
+                    continue
+        if stale_images:
+            raise RuntimeError("Stale icons after theme recovery: " + "; ".join(stale_images[:8]))
+
+        contrast_failures: list[str] = []
+        for widget in studio._walk_widgets():
+            try:
+                configuration = widget.configure()
+                if "background" not in configuration or "foreground" not in configuration:
+                    continue
+                background = str(widget.cget("background"))
+                foreground = str(widget.cget("foreground"))
+                if HEX_COLOR.fullmatch(background) and HEX_COLOR.fullmatch(foreground):
+                    ratio = contrast_ratio(foreground, background)
+                    if ratio < 4.5:
+                        contrast_failures.append(
+                            f"{widget.winfo_class()} {foreground}/{background}={ratio:.2f}:1"
+                        )
+            except (AttributeError, tk.TclError):
+                continue
+        if contrast_failures:
+            raise RuntimeError("Runtime contrast failures: " + "; ".join(contrast_failures[:8]))
+
+        payload = {
+            "passed": True,
+            "switches": 30,
+            "rollback_verified": True,
+            "open_dialogs_rethemed": open_windows,
+            "widgets_checked": len(studio._walk_widgets()),
+            "icons_checked": len(studio.icons),
+            "final_theme": studio.theme_name,
+        }
+        print(json.dumps(payload, indent=2))
+        return 0
+    except Exception as error:
+        LOGGER.exception("Theme stress test failed")
+        print(json.dumps({"passed": False, "error": str(error)}, indent=2))
+        return 1
+    finally:
+        root.destroy()
 
 
 def enable_windows_dpi_awareness() -> None:
@@ -2405,7 +2905,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=APP_NAME)
     parser.add_argument("--check", metavar="PROJECT", help="run headless HDL intelligence and print JSON")
     parser.add_argument("--project", help="initial project label, for example projects/01_button_led_pwm")
+    parser.add_argument("--theme", choices=tuple(THEMES), help="start with an explicit color theme")
     parser.add_argument("--ui-smoke-test", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--theme-stress-test", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument(
         "--demo-view", choices=("main", "insights", "commands", "snippets", "pins"),
         default="main", help=argparse.SUPPRESS,
@@ -2416,10 +2918,12 @@ def main() -> int:
         if not project.is_absolute():
             project = WORKSPACE_ROOT / project
         return check_project(project)
+    if arguments.theme_stress_test:
+        return stress_test_themes(arguments.project)
     if arguments.ui_smoke_test:
-        return smoke_test_ui(arguments.project)
+        return smoke_test_ui(arguments.project, arguments.theme)
     root = tk.Tk()
-    studio = FPGAStudio(root, initial_project=arguments.project)
+    studio = FPGAStudio(root, initial_project=arguments.project, initial_theme=arguments.theme)
     if arguments.demo_view != "main":
         root.after(650, lambda: open_demo_view(studio, arguments.demo_view))
     root.mainloop()

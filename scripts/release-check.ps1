@@ -22,7 +22,8 @@ try {
         'LICENSE', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
         'docs\DEPLOYMENT.md', 'docs\images\studio-main.png',
         'docs\images\studio-insights.png', 'docs\images\studio-command-palette.png',
-        'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png'
+        'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png',
+        'docs\images\studio-main-light.png', 'docs\images\studio-pattern-library-light.png'
     )
     $missing = @($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
     if ($missing.Count) {
@@ -36,6 +37,12 @@ try {
 
     Invoke-Checked python @('-m', 'compileall', '-q', 'ide')
     Invoke-Checked python @('-m', 'unittest', 'discover', '-s', 'ide\tests', '-v')
+    Invoke-Checked python @('ide\fpga_ide.py', '--ui-smoke-test', '--theme', 'dark',
+        '--project', 'projects\01_button_led_pwm')
+    Invoke-Checked python @('ide\fpga_ide.py', '--ui-smoke-test', '--theme', 'light',
+        '--project', 'projects\01_button_led_pwm')
+    Invoke-Checked python @('ide\fpga_ide.py', '--theme-stress-test',
+        '--project', 'projects\01_button_led_pwm')
     Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\_template')
     Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\01_button_led_pwm')
 

@@ -71,15 +71,17 @@ Add-Type -AssemblyName System.Drawing
 $python = Get-Command pythonw -ErrorAction SilentlyContinue
 if (-not $python) { $python = Get-Command python -ErrorAction Stop }
 $views = @(
-    @{ Demo = 'main';     Title = 'Tang Primer FPGA Studio'; File = 'studio-main.png' },
-    @{ Demo = 'insights'; Title = 'Tang Primer FPGA Studio'; File = 'studio-insights.png' },
-    @{ Demo = 'commands'; Title = 'Command Palette';          File = 'studio-command-palette.png' },
-    @{ Demo = 'snippets'; Title = 'HDL Pattern Library';      File = 'studio-pattern-library.png' },
-    @{ Demo = 'pins';     Title = 'Pin Assignment Inspector'; File = 'studio-pin-inspector.png' }
+    @{ Demo = 'main';     Theme = 'dark';  Title = 'Tang Primer FPGA Studio'; File = 'studio-main.png' },
+    @{ Demo = 'insights'; Theme = 'dark';  Title = 'Tang Primer FPGA Studio'; File = 'studio-insights.png' },
+    @{ Demo = 'commands'; Theme = 'dark';  Title = 'Command Palette';          File = 'studio-command-palette.png' },
+    @{ Demo = 'snippets'; Theme = 'dark';  Title = 'HDL Pattern Library';      File = 'studio-pattern-library.png' },
+    @{ Demo = 'pins';     Theme = 'dark';  Title = 'Pin Assignment Inspector'; File = 'studio-pin-inspector.png' },
+    @{ Demo = 'main';     Theme = 'light'; Title = 'Tang Primer FPGA Studio'; File = 'studio-main-light.png' },
+    @{ Demo = 'snippets'; Theme = 'light'; Title = 'HDL Pattern Library'; File = 'studio-pattern-library-light.png' }
 )
 
 foreach ($view in $views) {
-    $argumentLine = '"{0}" --project "{1}" --demo-view {2}' -f $ideScript, $Project, $view.Demo
+    $argumentLine = '"{0}" --project "{1}" --theme {2} --demo-view {3}' -f $ideScript, $Project, $view.Theme, $view.Demo
     $process = Start-Process -FilePath $python.Source -ArgumentList $argumentLine -WorkingDirectory $workspace -PassThru
     try {
         $handle = [IntPtr]::Zero
@@ -114,7 +116,7 @@ foreach ($view in $views) {
             }
             $target = Join-Path $outputDirectory $view.File
             $bitmap.Save($target, [Drawing.Imaging.ImageFormat]::Png)
-            Write-Host "Captured $($view.Demo): $target (${width}x${height})" -ForegroundColor Green
+            Write-Host "Captured $($view.Demo) [$($view.Theme)]: $target (${width}x${height})" -ForegroundColor Green
         } finally {
             $graphics.Dispose()
             $bitmap.Dispose()

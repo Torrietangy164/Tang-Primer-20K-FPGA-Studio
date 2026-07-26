@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [string] $Project = 'projects/01_button_led_pwm',
+    [ValidateSet('dark', 'light')]
+    [string] $Theme,
     [switch] $Console,
     [switch] $SmokeTest
 )
@@ -23,6 +25,9 @@ if (-not $pythonCommand) {
 
 if ($Console -or $SmokeTest) {
     $arguments = @($ideScript, '--project', $Project)
+    if ($Theme) {
+        $arguments += @('--theme', $Theme)
+    }
     if ($SmokeTest) {
         $arguments += '--ui-smoke-test'
     }
@@ -30,6 +35,7 @@ if ($Console -or $SmokeTest) {
     exit $LASTEXITCODE
 }
 
-$argumentLine = '"{0}" --project "{1}"' -f $ideScript, $Project
+$themeArgument = if ($Theme) { ' --theme {0}' -f $Theme } else { '' }
+$argumentLine = '"{0}" --project "{1}"{2}' -f $ideScript, $Project, $themeArgument
 Start-Process -FilePath $pythonCommand.Source -ArgumentList $argumentLine -WorkingDirectory $PSScriptRoot
 Write-Host 'Tang Primer FPGA Studio started.' -ForegroundColor Green

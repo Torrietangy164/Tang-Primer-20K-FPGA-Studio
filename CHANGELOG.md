@@ -2,6 +2,33 @@
 
 All notable user-facing changes are recorded here.
 
+## Unreleased
+
+## 1.1.0 — 2026-07-26
+
+### Added
+
+- Added a complete accessible light theme alongside the refined dark theme,
+  with a header control, View menu, `Ctrl+Alt+T` shortcut, startup override,
+  and locally remembered preference.
+- Added semantic color tokens, theme-aware custom icon regeneration, live
+  retheming for open editors/dialogs/menus/canvases, and safe rollback when a
+  platform-specific UI operation fails.
+- Expanded the HDL Pattern Library from six snippets to 72 categorized,
+  searchable references with difficulty, scope, explanations, code copying,
+  editor insertion, and completion aliases.
+- Added automated validation for library size, metadata, aliases, filtering,
+  and separation of synthesizable RTL from testbench-only constructs.
+- Added WCAG contrast validation, dark/light startup smoke tests, a 30-cycle
+  live-switch stress test with dialogs open, state/icon checks, and injected
+  failure recovery verification.
+
+### Verified
+
+- Complete release gate across Python, PowerShell, project intelligence,
+  Verilator lint, self-checking Icarus simulation, both UI themes, and
+  reproducible dark/light screenshots.
+
 ## 1.0.0 — 2026-07-26
 
 ### Added
