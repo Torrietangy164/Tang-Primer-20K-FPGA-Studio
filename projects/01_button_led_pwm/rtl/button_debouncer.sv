@@ -14,6 +14,8 @@ module button_debouncer #(
 );
     localparam integer COUNTER_WIDTH =
         (STABLE_CYCLES < 2) ? 1 : $clog2(STABLE_CYCLES);
+    localparam logic [COUNTER_WIDTH-1:0] STABLE_LIMIT =
+        COUNTER_WIDTH'(STABLE_CYCLES - 1);
 
     logic [COUNTER_WIDTH-1:0] counter;
     logic stable_n;
@@ -28,7 +30,7 @@ module button_debouncer #(
             if (sampled_n == stable_n) begin
                 counter <= '0;
             end else if ((STABLE_CYCLES <= 1) ||
-                         (counter == STABLE_CYCLES - 1)) begin
+                         (counter == STABLE_LIMIT)) begin
                 counter     <= '0;
                 stable_n    <= sampled_n;
                 press_pulse <= stable_n && !sampled_n;

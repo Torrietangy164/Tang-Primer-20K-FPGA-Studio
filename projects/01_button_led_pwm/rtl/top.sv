@@ -14,6 +14,8 @@ module top #(
 );
     logic reset;
     logic [4:0] synchronized_btn_n;
+    // Kept for the prepared GTKWave view; hardware behavior uses press_pulse.
+    /* verilator lint_off UNUSEDSIGNAL */
     logic [4:0] button_pressed;
     logic [4:0] press_pulse;
     logic [5:0] led_on;
@@ -23,6 +25,7 @@ module top #(
     logic [1:0] speed;
     logic [PWM_BITS-1:0] brightness;
     logic reverse;
+    /* verilator lint_on UNUSEDSIGNAL */
 
     reset_generator #(
         .RESET_CYCLES(RESET_CYCLES)

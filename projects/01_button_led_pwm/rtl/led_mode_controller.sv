@@ -20,14 +20,18 @@ module led_mode_controller #(
         (BASE_STEP_CYCLES < 2) ? 1 : $clog2(BASE_STEP_CYCLES);
     localparam integer BREATH_COUNTER_WIDTH =
         (BREATH_STEP_CYCLES < 2) ? 1 : $clog2(BREATH_STEP_CYCLES);
+    localparam integer CHASE_INDEX_WIDTH =
+        (LED_COUNT < 2) ? 1 : $clog2(LED_COUNT);
     localparam logic [PWM_BITS-1:0] BRIGHTNESS_INCREMENT =
         {{(PWM_BITS-2){1'b0}}, 2'b01} << (PWM_BITS-2);
+    localparam logic [CHASE_INDEX_WIDTH-1:0] LAST_LED_INDEX =
+        CHASE_INDEX_WIDTH'(LED_COUNT - 1);
 
     logic [STEP_COUNTER_WIDTH-1:0] step_counter;
     logic [BREATH_COUNTER_WIDTH-1:0] breath_counter;
     logic step_tick;
     logic breath_tick;
-    logic [2:0] chase_index;
+    logic [CHASE_INDEX_WIDTH-1:0] chase_index;
     logic [LED_COUNT-1:0] binary_count;
     logic [PWM_BITS-1:0] pwm_counter;
     logic [PWM_BITS-1:0] breath_level;
@@ -36,13 +40,13 @@ module led_mode_controller #(
 
     always_comb begin
         case (speed)
-            2'd0: step_limit = BASE_STEP_CYCLES - 1;
+            2'd0: step_limit = STEP_COUNTER_WIDTH'(BASE_STEP_CYCLES - 1);
             2'd1: step_limit = ((BASE_STEP_CYCLES / 2) > 0) ?
-                               (BASE_STEP_CYCLES / 2) - 1 : 0;
+                               STEP_COUNTER_WIDTH'((BASE_STEP_CYCLES / 2) - 1) : '0;
             2'd2: step_limit = ((BASE_STEP_CYCLES / 4) > 0) ?
-                               (BASE_STEP_CYCLES / 4) - 1 : 0;
+                               STEP_COUNTER_WIDTH'((BASE_STEP_CYCLES / 4) - 1) : '0;
             default: step_limit = ((BASE_STEP_CYCLES / 8) > 0) ?
-                                  (BASE_STEP_CYCLES / 8) - 1 : 0;
+                                  STEP_COUNTER_WIDTH'((BASE_STEP_CYCLES / 8) - 1) : '0;
         endcase
     end
 
@@ -74,7 +78,7 @@ module led_mode_controller #(
             end
 
             if ((BREATH_STEP_CYCLES <= 1) ||
-                (breath_counter == BREATH_STEP_CYCLES - 1)) begin
+                (breath_counter == BREATH_COUNTER_WIDTH'(BREATH_STEP_CYCLES - 1))) begin
                 breath_counter <= '0;
                 breath_tick    <= 1'b1;
             end else begin
@@ -92,9 +96,9 @@ module led_mode_controller #(
             if (step_tick) begin
                 binary_count <= binary_count + 1'b1;
                 if (reverse)
-                    chase_index <= (chase_index == 0) ? LED_COUNT - 1 : chase_index - 1'b1;
+                    chase_index <= (chase_index == '0) ? LAST_LED_INDEX : chase_index - 1'b1;
                 else
-                    chase_index <= (chase_index == LED_COUNT - 1) ? 0 : chase_index + 1'b1;
+                    chase_index <= (chase_index == LAST_LED_INDEX) ? '0 : chase_index + 1'b1;
             end
 
             if (breath_tick) begin
