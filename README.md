@@ -1,0 +1,82 @@
+# Tang Primer 20K FPGA development environment
+
+This folder is configured for the Sipeed Tang Primer 20K core board (`GW2A-LV18PG256C8/I7`), with the Dock carrier as the default pin map and programmer.
+
+The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
+
+## Daily commands
+
+Run these in PowerShell from this folder:
+
+```powershell
+.\fpga.ps1 build                 # create build/top.fs
+.\fpga.ps1 upload                # build + load SRAM (fast, volatile)
+.\fpga.ps1 flash                 # build + write/verify persistent flash
+.\fpga.ps1 sim                   # self-checking RTL simulation
+.\fpga.ps1 debug                 # lint + simulate + open GTKWave
+.\fpga.ps1 lint                  # Verilator lint only
+.\fpga.ps1 doctor                # tools, USB programmer, and COM-port checks
+.\fpga.ps1 driver                # configure WinUSB for Dock JTAG interface A
+.\fpga.ps1 detect                # scan the FPGA JTAG chain
+.\fpga.ps1 serial -Port COM5     # UART monitor, default 115200 baud
+.\fpga.ps1 clean                 # remove generated build files
+```
+
+Use `-NoBuild` with `upload` or `flash` to reuse the existing bitstream. In VS Code, `Ctrl+Shift+B` builds; the other commands are under **Terminal > Run Task**. Opening `build/waves.vcd` uses the HDL extension's built-in waveform viewer.
+
+## First hardware connection
+
+1. Seat the Primer 20K core module firmly in the Dock.
+2. Put Dock DIP switch **1 down** to enable the FPGA core board. Sipeed documents that JTAG will not work while the core is disabled.
+3. Connect the Dock's USB-C **JTAG/UART** port directly to the PC, preferably without a USB hub.
+4. Run `.\fpga.ps1 doctor`, then `.\fpga.ps1 detect`.
+5. Run `.\fpga.ps1 upload`. The four Dock LEDs should blink at different rates.
+
+On Windows, openFPGALoader needs WinUSB on the Dock's JTAG half. Run `.\fpga.ps1 driver`, allow the administrator prompt, then in Zadig choose **Options > List All Devices**, select **USB Serial Converter A (Interface 0 / MI_00)**, choose **WinUSB**, and click **Replace Driver**. Do not change Converter B / MI_01: it must keep the FTDI driver so UART remains available (currently COM11 on this machine). The setup script downloads the official Zadig 2.9 binary, verifies its pinned SHA-256, and checks its Akeo Consulting Authenticode signature before it can be launched.
+
+If the JTAG interface still does not appear, update the Dock's BL702 debugger firmware using [Sipeed's debugger update guide](https://wiki.sipeed.com/hardware/en/tang/common-doc/update_debugger.html). Firmware updating is deliberately not automated: the board must be placed into its special boot mode using the `702-BOOT` button, and choosing the wrong attached COM device is unsafe.
+
+`upload` writes SRAM and is the normal edit/test loop; its design disappears at power-off. `flash` writes the persistent configuration storage and verifies it. Avoid using JTAG/dual-purpose pins as GPIO unless you understand the recovery procedure.
+
+## Project layout
+
+- `rtl/` — synthesizable Verilog/SystemVerilog; `top.sv` is the starter design.
+- `constraints/primer20k_dock.cst` — 27 MHz clock and Dock LED pins from Sipeed's official examples.
+- `sim/` — self-checking testbenches and VCD generation.
+- `build/` — generated netlists, reports, simulation output, and `top.fs`.
+- `fpga.config.psd1` — device, family, top module, constraint, programmer, and pinned toolchain.
+- `fpga.ps1` — single entry point for building, programming, simulation, and diagnosis.
+
+The command-line build discovers `.v` and `.sv` files under `rtl/` automatically. `rtl/files.f` is available for external tools that prefer an explicit file list.
+
+## Debugging support
+
+- Verilator provides editor and command-line lint diagnostics.
+- Icarus runs the self-checking testbench and creates `build/waves.vcd`.
+- GTKWave or the VS Code waveform viewer supports signal-level debugging.
+- `build/timing.json` contains utilization and timing information from nextpnr.
+- `serial` monitors on-device UART diagnostics.
+
+This setup does not provide an open-source on-chip logic analyzer. If you specifically need internal live signal capture over JTAG, install Gowin EDA Education and use Gowin Analyzer Oscilloscope (GAO); that proprietary package requires an interactive Gowin download/install and is not needed for this open-source build/upload flow.
+
+## Lite carrier or custom board pins
+
+The Primer 20K Lite has no onboard JTAG/UART programmer; connect an external debugger to `5V0, TMS, TDO, TCK, TDI, RX, TX, GND` (UART TX/RX cross over). Create a Lite-specific `.cst`, then change `Constraint` in `fpga.config.psd1`. Sipeed's Lite bring-up example uses clock pin `H11` and a PMOD LED on `L14`.
+
+## Reinstalling
+
+The setup is reproducible on Windows 10/11:
+
+```powershell
+.\fpga.ps1 setup
+```
+
+The installer is pinned to OSS CAD Suite `2026-07-26` and verified with the SHA-256 published on its GitHub release. Set `OSS_CAD_SUITE_ROOT` before a command if you intentionally want to use another compatible installation.
+
+## Primary references
+
+- [Sipeed Tang Primer 20K board documentation](https://wiki.sipeed.com/hardware/en/tang/tang-primer-20k/primer-20k.html)
+- [Sipeed TangPrimer-20K official examples and pin constraints](https://github.com/sipeed/TangPrimer-20K-example)
+- [Project Apicula Gowin flow and Primer 20K support](https://github.com/YosysHQ/apicula)
+- [openFPGALoader board/programmer documentation](https://github.com/trabucayre/openFPGALoader)
+- [OSS CAD Suite installation and included tools](https://github.com/YosysHQ/oss-cad-suite-build)

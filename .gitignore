@@ -1,0 +1,9 @@
+build/
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+*.ghw
+*.log
+obj_dir/
+
