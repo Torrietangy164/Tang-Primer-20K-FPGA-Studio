@@ -15,6 +15,16 @@ pin map and programmer.
 Windows computer through dependencies, simulation, JTAG setup, build, and your
 first LED program on real hardware.
 
+> **Easiest Windows setup:** download the
+> [one-file Tang Primer FPGA Studio installer](https://github.com/atmarachchige0081/TangPrimer-FPGA-Studio-Installer/releases/latest),
+> keep the recommended FPGA-toolchain task selected, and launch the Studio from
+> its new Desktop icon. The separate
+> [installer repository](https://github.com/atmarachchige0081/TangPrimer-FPGA-Studio-Installer)
+> publishes SHA-256 checksums, public GitHub/Sigstore build provenance, and
+> beginner installation instructions. Version 1.1.0 is provenance-attested but
+> does not yet have a trusted Windows Authenticode publisher certificate, so
+> Windows may display **Unknown publisher**.
+
 The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
 
 ## Beginner desktop IDE
