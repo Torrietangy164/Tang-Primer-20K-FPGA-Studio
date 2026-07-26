@@ -47,7 +47,7 @@ persistent flash, and records rotating diagnostic logs under `.fpga-studio/`.
 Put design code in the selected project's `rtl/` folder, verification code in
 `sim/`, and top-level pin assignments in `constraints/`. The `build/` folder is
 generated output. See the [IDE guide](ide/README.md) for the complete workflow,
-shortcuts, and beta scope. In VS Code, the same launcher is available under
+shortcuts, and supported release scope. In VS Code, the same launcher is available under
 **Terminal > Run Task > FPGA: Open Beginner IDE**.
 
 For release validation, operations, security reporting, and contributions, see
