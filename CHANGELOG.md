@@ -4,6 +4,15 @@ All notable user-facing changes are recorded here.
 
 ## Unreleased
 
+### Added
+
+- Added a root-level, literal-beginner `INSTALL.md` covering each Windows
+  prerequisite, repository download, verified toolchain setup, simulation,
+  GTKWave, IDE use, safe JTAG driver configuration, detection, build, SRAM
+  upload, optional flash, success checkpoints, and troubleshooting.
+- Added automated checks for the installation sequence, required commands,
+  local links, repository URL, and hardware-safety boundaries.
+
 ## 1.1.0 — 2026-07-26
 
 ### Added

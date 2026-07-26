@@ -11,6 +11,10 @@ lint, debug, build, upload to SRAM, and flash persistent designs through a
 polished desktop interface or single commands. The Dock carrier is the default
 pin map and programmer.
 
+**Installing for the first time?** Follow [INSTALL.md](INSTALL.md) from a clean
+Windows computer through dependencies, simulation, JTAG setup, build, and your
+first LED program on real hardware.
+
 The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
 
 ## Beginner desktop IDE

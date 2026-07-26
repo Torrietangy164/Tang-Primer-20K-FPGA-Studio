@@ -19,7 +19,7 @@ function Invoke-Checked {
 Push-Location $workspace
 try {
     $requiredFiles = @(
-        'LICENSE', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
+        'LICENSE', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md', 'INSTALL.md',
         'docs\DEPLOYMENT.md', 'docs\images\studio-main.png',
         'docs\images\studio-insights.png', 'docs\images\studio-command-palette.png',
         'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png',
