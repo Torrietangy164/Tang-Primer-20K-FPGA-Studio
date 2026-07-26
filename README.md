@@ -1,11 +1,15 @@
-# Tang Primer 20K FPGA development environment
+# Tang Primer 20K FPGA Studio
 
-[![Quality gates](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/User-Firendly-Programming-FPGA-programming-interface-For-Tang-Primer-20K-FPGA-Bginners/actions/workflows/quality-gates.yml)
+[![Quality gates](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6c63ff.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-4f9cff.svg)](https://www.python.org/)
 [![Release: v1.1.0](https://img.shields.io/badge/release-v1.1.0-42d392.svg)](CHANGELOG.md)
 
-This folder is configured for the Sipeed Tang Primer 20K core board (`GW2A-LV18PG256C8/I7`), with the Dock carrier as the default pin map and programmer.
+An open-source, beginner-friendly FPGA IDE and development environment for the
+Sipeed Tang Primer 20K (`GW2A-LV18PG256C8/I7`). Simulate, inspect waveforms,
+lint, debug, build, upload to SRAM, and flash persistent designs through a
+polished desktop interface or single commands. The Dock carrier is the default
+pin map and programmer.
 
 The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
 
