@@ -23,6 +23,8 @@ try {
         'docs\DEPLOYMENT.md', 'docs\images\studio-main.png',
         'docs\images\studio-insights.png', 'docs\images\studio-command-palette.png',
         'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png',
+        'docs\images\studio-verification-center.png', 'docs\images\studio-hardware-setup.png',
+        'docs\images\studio-uart-terminal.png', 'docs\images\studio-first-project-tutorial.png',
         'docs\images\studio-main-light.png', 'docs\images\studio-pattern-library-light.png'
     )
     $missing = @($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
@@ -45,6 +47,7 @@ try {
         '--project', 'projects\01_button_led_pwm')
     Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\_template')
     Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\01_button_led_pwm')
+    Invoke-Checked python @('ide\fpga_ide.py', '--check', 'projects\03_uart_terminal')
 
     $parseFailures = @()
     foreach ($script in Get-ChildItem -Path $workspace -Recurse -Filter '*.ps1' -File) {
@@ -66,6 +69,10 @@ try {
             'lint', '-Project', 'projects/01_button_led_pwm')
         Invoke-Checked powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\fpga.ps1',
             'sim', '-Project', 'projects/01_button_led_pwm')
+        Invoke-Checked powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\fpga.ps1',
+            'lint', '-Project', 'projects/03_uart_terminal')
+        Invoke-Checked powershell @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', '.\fpga.ps1',
+            'sim', '-Project', 'projects/03_uart_terminal', '-Testbench', 'sim/tb_top.sv', '-TestbenchTop', 'tb_top')
     }
 
     Invoke-Checked git @('diff', '--check')

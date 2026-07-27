@@ -69,6 +69,33 @@ endmodule
         self.assertIsNotNone(definition)
         self.assertEqual("top.sv", definition[0].name)
 
+    def test_symbol_navigation_references_and_instance_generation(self):
+        root = self.make_project(
+            """`default_nettype none
+module child(input logic clk, input logic valid_i, output logic ready_o);
+  logic local_state;
+  assign ready_o = valid_i | local_state;
+endmodule
+module top(input logic clk, output logic led);
+  logic valid_i;
+  child child_instance(.clk(clk), .valid_i(valid_i), .ready_o(led));
+endmodule
+""",
+            'IO_LOC "clk" H11;\nIO_LOC "led" L16;\n',
+            'module tb_top; initial begin $dumpfile("build/waves.vcd"); $dumpvars; $fatal; end endmodule',
+        )
+        index = scan_project(root)
+        signal_definition = index.definition("valid_i", root / "rtl" / "top.sv")
+        self.assertIsNotNone(signal_definition)
+        self.assertEqual("top.sv", signal_definition[0].name)
+        references = index.references("valid_i")
+        self.assertGreaterEqual(len(references), 3)
+        self.assertTrue(all(location.column >= 1 for location in references))
+        instance = index.module_instantiation("child", "u_child")
+        self.assertIn("child u_child", instance)
+        self.assertIn(".valid_i", instance)
+        self.assertIn(".ready_o", instance)
+
     def test_repository_learning_project_is_clean(self):
         repository = Path(__file__).resolve().parents[2]
         index = scan_project(repository / "projects" / "01_button_led_pwm")

@@ -4,14 +4,43 @@ All notable user-facing changes are recorded here.
 
 ## Unreleased
 
+- No changes yet.
+
+## 1.2.0 — review build — 2026-07-27
+
 ### Added
 
 - Added a root-level, literal-beginner `INSTALL.md` covering each Windows
-  prerequisite, repository download, verified toolchain setup, simulation,
-  GTKWave, IDE use, safe JTAG driver configuration, detection, build, SRAM
-  upload, optional flash, success checkpoints, and troubleshooting.
-- Added automated checks for the installation sequence, required commands,
-  local links, repository URL, and hardware-safety boundaries.
+  prerequisite through a first safe SRAM upload, with automated sequence,
+  link, repository URL, and hardware-safety checks.
+- Replaced the folder-name prompt with a safe New Project Wizard offering
+  complete board-I/O and UART starting points plus an optional guided tutorial.
+- Added HDL symbol navigation for modules, ports, signals, and instances,
+  project-wide exact references, and named-port module-instantiation generation.
+- Added a dependency-free integrated Windows UART terminal with COM-port
+  discovery, transmit and receive, ASCII/hex views, timestamps, line endings,
+  history, connection recovery, and UTF-8 log saving.
+- Added a Verification Center for selecting testbenches and GTKWave layouts,
+  running simulation/debug, and summarizing PASS/FAIL assertion lines.
+- Added guided board/JTAG/UART/driver setup and an interactive six-step first
+  FPGA workflow that persists progress per project.
+- Added clickable Verilator/Icarus-style console locations and selection-safe
+  PowerShell support for `-Testbench`, `-TestbenchTop`, and `-WaveLayout`.
+- Added a complete UART greeting/echo learning project with RX, TX, physical
+  UART constraints, waveform layout, documentation, and protocol-level tests.
+
+### Changed
+
+- Refined both themes into calmer, more natural professional palettes and
+  replaced mechanical labels with clearer human language and workflow groups.
+- Expanded CI and local release gates to validate the maintained UART project
+  and retheme seven open feature dialogs across 30 live theme changes.
+
+### Verified
+
+- 29 Python tests, dark/light startup, theme rollback and contrast checks,
+  Verilator lint, a 30-byte bidirectional UART simulation, and Tang Primer 20K
+  synthesis/place/route/packing at 27 MHz (345.90 MHz reported maximum).
 
 ## 1.1.0 — 2026-07-26
 

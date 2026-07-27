@@ -13,7 +13,7 @@ Start it from the repository root:
 On Windows, a beginner can also double-click `Open-FPGA-IDE.cmd` in File
 Explorer. The PowerShell launcher starts the GUI without a console window.
 
-Use `-Project projects/02_uart_terminal` to select another project at startup,
+Use `-Project projects/03_uart_terminal` to select another project at startup,
 or `-Theme light` / `-Theme dark` to override the remembered appearance.
 Use `-Console` when diagnosing a GUI startup problem.
 
@@ -25,7 +25,8 @@ Use `-Console` when diagnosing a GUI startup problem.
 - Module hierarchy plus module, port, signal, parameter, and instance indexing.
 - `Ctrl+Space` completions for HDL keywords, modules, ports, internal signals,
   and 72 smart pattern aliases such as `fsm`, `sync2`, `fifo`, and `counter`.
-- `F12` or `Ctrl+Click` navigation to recognized module definitions.
+- `F12` or `Ctrl+Click` navigation to modules, ports, signals, and instances;
+  `Shift+F12` exact project references; and named-port instance generation.
 - Searchable `Ctrl+Shift+P` command palette and whole-project
   `Ctrl+Shift+F` text search.
 - Searchable HDL Pattern Library with 72 reviewed references across sequential
@@ -43,7 +44,14 @@ Use `-Console` when diagnosing a GUI startup problem.
   timing margin, device utilization, pin coverage, and artifact status.
 - Pin Assignment Inspector showing each signal, package pin, electrical
   properties, and source line without guessing board connections.
-- New-project wizard based on `projects/_template` and a new-module wizard.
+- A complete New Project Wizard with verified board-I/O and UART starting
+  points, safe names, clean copies, and an optional first-project tutorial.
+- Verification Center selection for testbenches and GTKWave layouts, with
+  PASS/FAIL assertion summaries and clickable console source locations.
+- Guided hardware setup that clearly separates JTAG Interface 0/WinUSB from
+  UART Interface 1/serial, plus Doctor and Detect actions.
+- Integrated dependency-free Windows UART terminal with COM auto-detection,
+  read/write ASCII or hex, timestamps, line endings, history, and log saving.
 - Streaming console output for simulate, GTKWave, lint, debug, build, SRAM
   upload, persistent flash, JTAG detection, doctor, UART, setup, and driver
   configuration.
@@ -98,7 +106,8 @@ simulation before building or programming the FPGA.
 |---|---|
 | `Ctrl+S` | Save the current file |
 | `Ctrl+Space` | Show project-aware completions |
-| `F12` / `Ctrl+Click` | Go to a project module definition |
+| `F12` / `Ctrl+Click` | Go to a project symbol definition |
+| `Shift+F12` | Find exact project symbol references |
 | `Ctrl+Shift+P` | Open the searchable command palette |
 | `Ctrl+Shift+F` | Search text throughout the project |
 | `Ctrl+Alt+S` | Open the HDL Pattern Library |

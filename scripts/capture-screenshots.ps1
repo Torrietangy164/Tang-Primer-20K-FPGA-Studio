@@ -76,6 +76,10 @@ $views = @(
     @{ Demo = 'commands'; Theme = 'dark';  Title = 'Command Palette';          File = 'studio-command-palette.png' },
     @{ Demo = 'snippets'; Theme = 'dark';  Title = 'HDL Pattern Library';      File = 'studio-pattern-library.png' },
     @{ Demo = 'pins';     Theme = 'dark';  Title = 'Pin Assignment Inspector'; File = 'studio-pin-inspector.png' },
+    @{ Demo = 'verification'; Theme = 'dark'; Title = 'Verification center'; File = 'studio-verification-center.png' },
+    @{ Demo = 'hardware'; Theme = 'dark'; Title = 'Tang Primer 20K hardware setup'; File = 'studio-hardware-setup.png' },
+    @{ Demo = 'uart'; Theme = 'dark'; Title = 'UART terminal'; File = 'studio-uart-terminal.png' },
+    @{ Demo = 'tutorial'; Theme = 'light'; Title = 'First-project tutorial'; File = 'studio-first-project-tutorial.png' },
     @{ Demo = 'main';     Theme = 'light'; Title = 'Tang Primer FPGA Studio'; File = 'studio-main-light.png' },
     @{ Demo = 'snippets'; Theme = 'light'; Title = 'HDL Pattern Library'; File = 'studio-pattern-library-light.png' }
 )
@@ -96,9 +100,15 @@ foreach ($view in $views) {
         [void] [StudioScreenshot]::SetForegroundWindow($handle)
         Start-Sleep -Milliseconds 650
         $rect = New-Object StudioScreenshot+RECT
-        [void] [StudioScreenshot]::GetWindowRect($handle, [ref] $rect)
-        $width = $rect.Right - $rect.Left
-        $height = $rect.Bottom - $rect.Top
+        $width = 0
+        $height = 0
+        $boundsDeadline = [DateTime]::UtcNow.AddSeconds(5)
+        while (($width -lt 100 -or $height -lt 100) -and [DateTime]::UtcNow -lt $boundsDeadline) {
+            [void] [StudioScreenshot]::GetWindowRect($handle, [ref] $rect)
+            $width = $rect.Right - $rect.Left
+            $height = $rect.Bottom - $rect.Top
+            if ($width -lt 100 -or $height -lt 100) { Start-Sleep -Milliseconds 150 }
+        }
         if ($width -lt 100 -or $height -lt 100) {
             throw "Invalid capture bounds for '$($view.Title)': ${width}x${height}"
         }
