@@ -52,6 +52,11 @@ Use `-Console` when diagnosing a GUI startup problem.
   UART Interface 1/serial, plus Doctor and Detect actions.
 - Integrated dependency-free Windows UART terminal with COM auto-detection,
   read/write ASCII or hex, timestamps, line endings, history, and log saving.
+- Searchable synthesized-netlist popup backed by `build/top.json`, with a
+  categorized overview, component/type filtering, local fan-in/fan-out,
+  zooming, panning, named nets, and RTL source navigation.
+- Versioned first-launch release notes that appear once per release and remain
+  available from Help and the command palette.
 - Streaming console output for simulate, GTKWave, lint, debug, build, SRAM
   upload, persistent flash, JTAG detection, doctor, UART, setup, and driver
   configuration.

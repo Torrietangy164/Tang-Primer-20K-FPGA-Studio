@@ -6,7 +6,7 @@ All notable user-facing changes are recorded here.
 
 - No changes yet.
 
-## 1.2.0 — review build — 2026-07-27
+## 1.2.0 — 2026-07-27
 
 ### Added
 
@@ -28,17 +28,24 @@ All notable user-facing changes are recorded here.
   PowerShell support for `-Testbench`, `-TestbenchTop`, and `-WaveLayout`.
 - Added a complete UART greeting/echo learning project with RX, TX, physical
   UART constraints, waveform layout, documentation, and protocol-level tests.
+- Added a separate synthesized-netlist viewer with searchable components,
+  categorized overview, local fan-in/fan-out, named nets, zoom/pan controls,
+  large-design limits, and source navigation from Yosys cell metadata.
+- Added versioned first-launch release notes that appear once per release and
+  remain available from Help and the command palette.
+- Added a release-driven installer notification workflow with a secure
+  token-free polling fallback in the one-file installer repository.
 
 ### Changed
 
 - Refined both themes into calmer, more natural professional palettes and
   replaced mechanical labels with clearer human language and workflow groups.
 - Expanded CI and local release gates to validate the maintained UART project
-  and retheme seven open feature dialogs across 30 live theme changes.
+  and retheme nine open feature dialogs across 30 live theme changes.
 
 ### Verified
 
-- 29 Python tests, dark/light startup, theme rollback and contrast checks,
+- 33 Python tests, dark/light startup, theme rollback and contrast checks,
   Verilator lint, a 30-byte bidirectional UART simulation, and Tang Primer 20K
   synthesis/place/route/packing at 27 MHz (345.90 MHz reported maximum).
 

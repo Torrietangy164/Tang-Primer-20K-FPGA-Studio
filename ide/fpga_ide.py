@@ -45,11 +45,18 @@ from ide.hdl_patterns import (  # noqa: E402
     PATTERNS,
     search_patterns,
 )
+from ide.netlist_graph import NetlistError, NetlistGraph, load_yosys_netlist  # noqa: E402
+from ide.netlist_viewer import open_netlist_viewer  # noqa: E402
 from ide.project_insights import load_project_insights, workflow_steps  # noqa: E402
 from ide.project_wizard import (  # noqa: E402
     ProjectCreationError,
     create_project,
     discover_templates,
+)
+from ide.release_notes import (  # noqa: E402
+    mark_release_notes_seen,
+    notes_for_version,
+    release_notes_pending,
 )
 from ide.serial_backend import (  # noqa: E402
     SerialConnection,
@@ -325,6 +332,7 @@ class FPGAStudio:
         self.theme_var = tk.StringVar(master=root, value=self.theme_name)
         self.theme_button_text = tk.StringVar(master=root)
         self.theme_button_text.set("Light mode" if self.theme_name == "dark" else "Dark mode")
+        self.release_notes_window: tk.Toplevel | None = None
         self.menus: list[tk.Menu] = []
         self.root.report_callback_exception = self._report_callback_exception
         self.root.title(f"{APP_NAME} — {APP_VERSION}")
@@ -853,6 +861,8 @@ class FPGAStudio:
         tools_menu.add_command(label="Smart project check", command=lambda: self.analyze_project(True))
         tools_menu.add_command(label="Project insights", image=self.icons["dashboard"], compound="left",
                                command=self.show_project_insights)
+        tools_menu.add_command(label="Synthesized netlist viewer…", image=self.icons["dashboard"], compound="left",
+                               command=self.show_netlist_viewer)
         tools_menu.add_command(label="Pin assignment inspector", image=self.icons["target"], compound="left",
                                command=self.show_pin_inspector)
         tools_menu.add_command(label="Verification center…", image=self.icons["bug"], compound="left",
@@ -870,6 +880,9 @@ class FPGAStudio:
 
         help_menu = tk.Menu(menu, tearoff=False, bg=COLORS["panel"], fg=COLORS["text"],
                             activebackground=COLORS["selection"])
+        help_menu.add_command(label="What's new in 1.2.0…", image=self.icons["sparkle"], compound="left",
+                              command=self.show_release_notes)
+        help_menu.add_separator()
         help_menu.add_command(label="Interactive first-project tutorial…", image=self.icons["bulb"], compound="left",
                               command=self.show_first_project_tutorial)
         help_menu.add_command(label="Project guide", command=self.show_beginner_guide)
@@ -914,6 +927,19 @@ class FPGAStudio:
         toolbar.pack(fill="x")
         design_row = ttk.Frame(toolbar, style="Header.TFrame")
         design_row.pack(fill="x")
+        # Reserve the right-side utilities before packing the longer action
+        # groups so they remain fully visible on supported laptop widths.
+        self._action_button(
+            design_row, "Commands", "command", self.show_command_palette,
+            tooltip="Search every IDE action (Ctrl+Shift+P)",
+        ).pack(side="right", padx=2)
+        self._action_button(
+            design_row, "", "search", self.show_project_search, "Toolbar.TButton",
+            "Search this project (Ctrl+Shift+F)", width=2,
+        ).pack(side="right", padx=2)
+        self._action_button(
+            design_row, "", "save", self.save_file, "Toolbar.TButton", "Save current file (Ctrl+S)", width=2,
+        ).pack(side="right", padx=2)
         ttk.Label(design_row, text="Create", style="HeaderMuted.TLabel").pack(side="left", padx=(0, 5))
         create_group = ttk.Frame(design_row, style="Header.TFrame")
         create_group.pack(side="left")
@@ -943,22 +969,6 @@ class FPGAStudio:
             )
             button.pack(side="left", padx=2)
             self.runner_buttons.append(button)
-        ttk.Separator(design_row, orient="vertical").pack(side="left", fill="y", padx=9)
-        self._action_button(
-            design_row, "Analyze", "sparkle", lambda: self.analyze_project(True),
-            tooltip="Refresh intelligent project diagnostics",
-        ).pack(side="left", padx=2)
-        self._action_button(
-            design_row, "Commands", "command", self.show_command_palette,
-            tooltip="Search every IDE action (Ctrl+Shift+P)",
-        ).pack(side="right", padx=2)
-        self._action_button(
-            design_row, "", "search", self.show_project_search, "Toolbar.TButton",
-            "Search this project (Ctrl+Shift+F)", width=2,
-        ).pack(side="right", padx=2)
-        self._action_button(
-            design_row, "", "save", self.save_file, "Toolbar.TButton", "Save current file (Ctrl+S)", width=2,
-        ).pack(side="right", padx=2)
 
         hardware_row = ttk.Frame(toolbar, style="Header.TFrame")
         hardware_row.pack(fill="x", pady=(3, 0))
@@ -976,6 +986,15 @@ class FPGAStudio:
         self._action_button(
             hardware_row, "Setup guide", "doctor", self.show_hardware_setup,
             tooltip="Check the board, JTAG driver, UART port, and DIP switches",
+        ).pack(side="left", padx=2)
+        ttk.Separator(hardware_row, orient="vertical").pack(side="left", fill="y", padx=9)
+        self._action_button(
+            hardware_row, "Analyze", "sparkle", lambda: self.analyze_project(True),
+            tooltip="Refresh intelligent project diagnostics",
+        ).pack(side="left", padx=2)
+        self._action_button(
+            hardware_row, "Netlist", "dashboard", self.show_netlist_viewer,
+            tooltip="Explore synthesized components and local connectivity",
         ).pack(side="left", padx=2)
         self.stop_button = self._action_button(
             hardware_row, "Stop", "stop", self.stop_process, "Danger.TButton", "Stop the running command tree",
@@ -2069,11 +2088,13 @@ class FPGAStudio:
             ("View: Toggle dark/light mode", "Switch the complete live workspace theme", "Ctrl+Alt+T", self.toggle_theme),
             ("Intelligence: Smart check", "Refresh actionable design diagnostics", "", lambda: self.analyze_project(True)),
             ("Intelligence: Project insights", "Review health, timing, utilization and readiness", "", self.show_project_insights),
+            ("Intelligence: View synthesized netlist", "Search cells and inspect local connectivity", "", self.show_netlist_viewer),
             ("Intelligence: Inspect pin map", "Review signal, package pin, voltage standard and source line", "", self.show_pin_inspector),
             ("Intelligence: Apply quick fix", "Apply a safe fix to the selected problem", "", self.apply_quick_fix),
             ("Tools: Verification center", "Select a testbench, assertions, and waveform layout", "", self.show_verification_center),
             ("Tools: UART terminal", "Auto-detect COM ports, send/receive, inspect hex, and save logs", "", self.open_serial_monitor),
             ("Tools: Open project folder", "Reveal the selected project in Explorer", "", self.open_project_folder),
+            ("Help: What's new in 1.2.0", "Reopen this version's release highlights", "", self.show_release_notes),
             ("Help: First-project tutorial", "Follow the complete verified workflow step by step", "", self.show_first_project_tutorial),
             ("Help: Project guide", "Open the project guide and coach", "", self.show_beginner_guide),
         ]
@@ -2483,6 +2504,32 @@ class FPGAStudio:
         output.configure(state="disabled")
         window.bind("<Escape>", lambda _event: window.destroy())
 
+    def show_netlist_viewer(self) -> None:
+        artifact = self.current_project / "build" / "top.json"
+        if not artifact.is_file():
+            if messagebox.askyesno(
+                "Build required",
+                "The netlist viewer uses the synthesized Yosys artifact build/top.json.\n\n"
+                "Run Build now? Open the viewer again after the build completes.",
+                parent=self.root,
+            ):
+                self.run_fpga("build")
+            return
+        try:
+            graph = load_yosys_netlist(
+                artifact, self.current_project, self.current_index.top_name,
+            )
+        except NetlistError as error:
+            messagebox.showerror("Netlist viewer", str(error), parent=self.root)
+            return
+        open_netlist_viewer(
+            self.root, graph, COLORS, self.icons,
+            lambda path, line: self.open_file(path, line),
+        )
+        self.status_text.set(
+            f"Netlist: {len(graph.cells):,} cells and {len(graph.connections):,} connections"
+        )
+
     def show_pin_inspector(self) -> None:
         config = self.current_project / "fpga.config.psd1"
         config_text = config.read_text(encoding="utf-8", errors="replace") if config.exists() else ""
@@ -2786,6 +2833,126 @@ endmodule
             self.open_file(readme)
         self.intelligence_notebook.select(2)
         self._refresh_coach()
+
+    def show_release_notes_if_needed(self) -> None:
+        """Present this version's notes once, without interrupting later launches."""
+        if release_notes_pending(self.settings, APP_VERSION):
+            self.show_release_notes()
+
+    def show_release_notes(self, *, mark_seen: bool = True) -> None:
+        """Show the current version's highlights in a persistent, themed window."""
+        if self.release_notes_window is not None:
+            try:
+                if self.release_notes_window.winfo_exists():
+                    self.release_notes_window.deiconify()
+                    self.release_notes_window.lift()
+                    self.release_notes_window.focus_force()
+                    return
+            except tk.TclError:
+                pass
+            self.release_notes_window = None
+
+        notes = notes_for_version(APP_VERSION)
+        dialog = tk.Toplevel(self.root)
+        self.release_notes_window = dialog
+        dialog.title(f"What's new in {APP_VERSION}")
+        dialog.geometry("980x700")
+        dialog.minsize(780, 620)
+        dialog.configure(bg=COLORS["bg"])
+        dialog.transient(self.root)
+
+        def close() -> None:
+            self.release_notes_window = None
+            try:
+                dialog.destroy()
+            except tk.TclError:
+                pass
+
+        dialog.protocol("WM_DELETE_WINDOW", close)
+        dialog.bind("<Escape>", lambda _event: close())
+
+        header = ttk.Frame(dialog, style="Top.TFrame", padding=(26, 20, 26, 18))
+        header.pack(fill="x")
+        heading_row = ttk.Frame(header, style="Top.TFrame")
+        heading_row.pack(fill="x")
+        ttk.Label(heading_row, image=self.icons["sparkle"], style="Title.TLabel").pack(
+            side="left", padx=(0, 10), anchor="n",
+        )
+        heading_copy = ttk.Frame(heading_row, style="Top.TFrame")
+        heading_copy.pack(side="left", fill="x", expand=True)
+        ttk.Label(heading_copy, text=notes.eyebrow, style="Eyebrow.TLabel").pack(anchor="w")
+        ttk.Label(
+            heading_copy, text=notes.title, style="Title.TLabel", wraplength=790, justify="left",
+        ).pack(anchor="w", pady=(5, 0))
+
+        body = ttk.Frame(dialog, padding=(26, 18, 26, 12))
+        body.pack(fill="both", expand=True)
+        intro = ttk.Frame(body, style="Card.TFrame", padding=(18, 14))
+        intro.pack(fill="x", pady=(0, 14))
+        ttk.Label(
+            intro, text=notes.summary, style="Muted.TLabel", wraplength=850, justify="left",
+        ).pack(anchor="w")
+
+        cards = ttk.Frame(body)
+        cards.pack(fill="both", expand=True)
+        cards.columnconfigure(0, weight=1, uniform="release-card")
+        cards.columnconfigure(1, weight=1, uniform="release-card")
+        for row in range(3):
+            cards.rowconfigure(row, weight=1, uniform="release-row")
+        for index, highlight in enumerate(notes.highlights):
+            row, column = divmod(index, 2)
+            card = ttk.Frame(cards, style="Card.TFrame", padding=(16, 13))
+            card.grid(
+                row=row, column=column, sticky="nsew",
+                padx=(0, 7) if column == 0 else (7, 0), pady=6,
+            )
+            title_row = ttk.Frame(card, style="Card.TFrame")
+            title_row.pack(fill="x")
+            ttk.Label(title_row, image=self.icons[highlight.icon], style="Card.TLabel").pack(
+                side="left", padx=(0, 9),
+            )
+            ttk.Label(
+                title_row, text=highlight.title, style="CardTitle.TLabel", wraplength=330,
+            ).pack(side="left", anchor="w")
+            ttk.Label(
+                card, text=highlight.description, style="Muted.TLabel",
+                wraplength=390, justify="left",
+            ).pack(anchor="w", pady=(8, 0))
+
+        footer = ttk.Frame(dialog, padding=(26, 8, 26, 20))
+        footer.pack(fill="x")
+
+        def open_changelog() -> None:
+            close()
+            self.open_file(WORKSPACE_ROOT / "CHANGELOG.md")
+
+        def start_tutorial() -> None:
+            close()
+            self.root.after_idle(self.show_first_project_tutorial)
+
+        self._action_button(
+            footer, "Start exploring", "play", close, "Accent.TButton",
+        ).pack(side="right")
+        ttk.Button(footer, text="First-project tutorial", command=start_tutorial).pack(side="right", padx=8)
+        ttk.Button(footer, text="Full changelog", command=open_changelog).pack(side="right")
+        ttk.Label(
+            footer, text="Reopen later from Help → What's new",
+            style="Muted.TLabel",
+        ).pack(side="left")
+
+        # Reserve the action row before allowing the highlight grid to expand.
+        # Tk's packer otherwise lets large fonts squeeze footer buttons on
+        # high-DPI laptop displays.
+        body.pack_forget()
+        footer.pack_forget()
+        footer.pack(side="bottom", fill="x")
+        body.pack(fill="both", expand=True)
+
+        if mark_seen:
+            mark_release_notes_seen(self.settings, APP_VERSION)
+            save_user_settings(self.settings)
+        dialog.lift()
+        dialog.focus_force()
 
     def show_first_project_tutorial(self) -> None:
         project_key = self._project_relative()
@@ -3585,7 +3752,12 @@ def stress_test_themes(project_name: str | None) -> int:
         studio.show_verification_center()
         studio.show_hardware_setup()
         studio.show_first_project_tutorial()
+        studio.show_release_notes(mark_seen=False)
         studio.open_serial_monitor()
+        netlist_fixture = NetlistGraph(
+            WORKSPACE_ROOT / "build" / "theme-test.json", "Yosys theme fixture", "top", {}, {}, [],
+        )
+        open_netlist_viewer(root, netlist_fixture, COLORS, studio.icons, lambda _path, _line: None)
         root.update_idletasks()
         editor_before = studio.editor.get("1.0", "end-1c")
         open_windows = len([widget for widget in studio._walk_widgets() if isinstance(widget, tk.Toplevel)])
@@ -3729,6 +3901,10 @@ def open_demo_view(studio: FPGAStudio, view: str) -> None:
         studio.open_serial_monitor()
     elif view == "tutorial":
         studio.show_first_project_tutorial()
+    elif view == "netlist":
+        studio.show_netlist_viewer()
+    elif view == "release-notes":
+        studio.show_release_notes(mark_seen=False)
 
 
 def main() -> int:
@@ -3739,10 +3915,12 @@ def main() -> int:
     parser.add_argument("--theme", choices=tuple(THEMES), help="start with an explicit color theme")
     parser.add_argument("--ui-smoke-test", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--theme-stress-test", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--skip-startup-release-notes", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument(
         "--demo-view", choices=(
             "main", "insights", "commands", "snippets", "pins",
             "verification", "hardware", "uart", "tutorial",
+            "netlist", "release-notes",
         ),
         default="main", help=argparse.SUPPRESS,
     )
@@ -3760,6 +3938,8 @@ def main() -> int:
     studio = FPGAStudio(root, initial_project=arguments.project, initial_theme=arguments.theme)
     if arguments.demo_view != "main":
         root.after(650, lambda: open_demo_view(studio, arguments.demo_view))
+    elif not arguments.skip_startup_release_notes:
+        root.after(520, studio.show_release_notes_if_needed)
     root.mainloop()
     return 0
 

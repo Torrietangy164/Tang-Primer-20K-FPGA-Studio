@@ -3,7 +3,7 @@
 [![Quality gates](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-6c63ff.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-4f9cff.svg)](https://www.python.org/)
-[![Review build: v1.2.0](https://img.shields.io/badge/review-v1.2.0-2f6fed.svg)](CHANGELOG.md)
+[![Release: v1.2.0](https://img.shields.io/badge/release-v1.2.0-42d392.svg)](CHANGELOG.md)
 
 An open-source, beginner-friendly FPGA IDE and development environment for the
 Sipeed Tang Primer 20K (`GW2A-LV18PG256C8/I7`). Simulate, inspect waveforms,
@@ -21,8 +21,8 @@ first LED program on real hardware.
 > its new Desktop icon. The separate
 > [installer repository](https://github.com/atmarachchige0081/TangPrimer-FPGA-Studio-Installer)
 > publishes SHA-256 checksums, public GitHub/Sigstore build provenance, and
-> beginner installation instructions. Version 1.1.0 is provenance-attested but
-> does not yet have a trusted Windows Authenticode publisher certificate, so
+> beginner installation instructions. Releases are provenance-attested but do
+> not yet have a trusted Windows Authenticode publisher certificate, so
 > Windows may display **Unknown publisher**.
 
 The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
@@ -62,6 +62,15 @@ switches themes repeatedly with dialogs open and verifies automatic rollback
 after an injected UI failure. To force a startup theme, run
 `./FPGA-IDE.ps1 -Theme light` or `./FPGA-IDE.ps1 -Theme dark`.
 
+### A useful first launch
+
+![Version 1.2.0 first-launch release notes](docs/images/studio-release-notes.png)
+
+The first launch of each Studio version opens a concise, visual **What's new**
+screen instead of dropping a beginner straight into source code. It appears
+only once per version, stores that acknowledgement in local settings, and can
+always be reopened from **Help → What's new** or the command palette.
+
 ### Guided v1.2 workflows
 
 | Select a testbench and waveform layout | Auto-detected read/write UART terminal |
@@ -79,6 +88,17 @@ Tool errors that include a source location are clickable in the console. The
 hardware guide clearly separates JTAG Interface 0 from UART Interface 1, while
 the UART terminal auto-detects COM ports and supports ASCII/hex display,
 timestamps, transmit history, line endings, and log saving.
+
+### Synthesized netlist viewer
+
+![Searchable synthesized netlist viewer](docs/images/studio-netlist-viewer.png)
+
+Press **Netlist** after a successful Build to inspect the actual Yosys
+implementation in a separate popup. The viewer provides a categorized overview,
+a searchable table of every synthesized component, type filtering, zoom and
+pan controls, one-hop fan-in/fan-out views, named-net labels, and double-click
+navigation back to RTL source locations. Large designs are summarized first so
+the diagram stays useful instead of becoming an unreadable wall of wires.
 
 ### Intelligent workspace
 
@@ -109,6 +129,13 @@ For release validation, operations, security reporting, and contributions, see
 [Deployment](docs/DEPLOYMENT.md), [Security](SECURITY.md),
 [Contributing](CONTRIBUTING.md), and the [Changelog](CHANGELOG.md). The project
 is available under the [MIT License](LICENSE).
+
+The main and installer repositories are connected by a public release pipeline.
+When a Studio release is published, the installer workflow synchronizes only
+approved IDE/workspace paths from the immutable tag, builds on a clean Windows
+runner, tests both themes, publishes a SHA-256 checksum, and creates a signed
+GitHub build-provenance attestation. An hourly token-free poll provides a safe
+fallback if the optional immediate cross-repository dispatch is not configured.
 
 ## Daily commands
 

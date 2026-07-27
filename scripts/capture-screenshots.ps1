@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string] $Project = 'projects/01_button_led_pwm'
+    [string] $Project = 'projects/01_button_led_pwm',
+    [string[]] $Only = @()
 )
 
 Set-StrictMode -Version Latest
@@ -80,12 +81,20 @@ $views = @(
     @{ Demo = 'hardware'; Theme = 'dark'; Title = 'Tang Primer 20K hardware setup'; File = 'studio-hardware-setup.png' },
     @{ Demo = 'uart'; Theme = 'dark'; Title = 'UART terminal'; File = 'studio-uart-terminal.png' },
     @{ Demo = 'tutorial'; Theme = 'light'; Title = 'First-project tutorial'; File = 'studio-first-project-tutorial.png' },
+    @{ Demo = 'netlist'; Theme = 'dark'; Title = 'Synthesized netlist viewer'; File = 'studio-netlist-viewer.png' },
+    @{ Demo = 'release-notes'; Theme = 'dark'; Title = "What's new in 1.2.0"; File = 'studio-release-notes.png' },
     @{ Demo = 'main';     Theme = 'light'; Title = 'Tang Primer FPGA Studio'; File = 'studio-main-light.png' },
     @{ Demo = 'snippets'; Theme = 'light'; Title = 'HDL Pattern Library'; File = 'studio-pattern-library-light.png' }
 )
+if ($Only.Count -gt 0) {
+    $views = @($views | Where-Object { $Only -contains $_.Demo })
+    if ($views.Count -eq 0) {
+        throw "No screenshot view matched -Only: $($Only -join ', ')"
+    }
+}
 
 foreach ($view in $views) {
-    $argumentLine = '"{0}" --project "{1}" --theme {2} --demo-view {3}' -f $ideScript, $Project, $view.Theme, $view.Demo
+    $argumentLine = '"{0}" --project "{1}" --theme {2} --demo-view {3} --skip-startup-release-notes' -f $ideScript, $Project, $view.Theme, $view.Demo
     $process = Start-Process -FilePath $python.Source -ArgumentList $argumentLine -WorkingDirectory $workspace -PassThru
     try {
         $handle = [IntPtr]::Zero

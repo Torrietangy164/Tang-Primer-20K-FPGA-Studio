@@ -35,6 +35,26 @@ lint/simulation.
 GitHub Actions repeats platform-independent gates for every push and pull
 request.
 
+## Automatic one-file installer release
+
+The installer repository owns the Windows packaging workflow. On an upstream
+Studio release it performs the following controlled sequence:
+
+1. Resolve a semantic `vX.Y.Z` release tag from the public GitHub API.
+2. Clone that immutable tag and synchronize only the approved IDE, project,
+   command, documentation, and screenshot paths.
+3. Commit the synchronized installer sources and create the matching installer
+   tag.
+4. Build and test the package from that tag on a clean Windows runner.
+5. Publish the EXE, SHA-256 checksum, and GitHub/Sigstore build provenance.
+
+`.github/workflows/publish-installer.yml` sends an immediate
+`repository_dispatch` when the optional `INSTALLER_REPO_TOKEN` secret is
+configured. Use a fine-grained token limited to the installer repository; do
+not copy a broad personal CLI token into Actions. The installer also checks the
+latest public Studio release hourly, so publication remains automatic without
+any cross-repository secret (with up to an hour of delay).
+
 ## Runtime data
 
 The application stores local state under `.fpga-studio/`:

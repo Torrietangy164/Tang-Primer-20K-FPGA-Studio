@@ -25,6 +25,7 @@ try {
         'docs\images\studio-pattern-library.png', 'docs\images\studio-pin-inspector.png',
         'docs\images\studio-verification-center.png', 'docs\images\studio-hardware-setup.png',
         'docs\images\studio-uart-terminal.png', 'docs\images\studio-first-project-tutorial.png',
+        'docs\images\studio-netlist-viewer.png', 'docs\images\studio-release-notes.png',
         'docs\images\studio-main-light.png', 'docs\images\studio-pattern-library-light.png'
     )
     $missing = @($requiredFiles | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) })
